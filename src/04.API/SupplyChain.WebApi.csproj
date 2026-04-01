@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>disable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>bc455ce8-3477-4fb3-9359-d8e566411389</UserSecretsId>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<DockerfileContext>..\..\..</DockerfileContext>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
+		<PackageReference Include="StackExchange.Redis" Version="2.12.1" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+		<PackageReference Include="Microsoft.OpenApi" Version="1.6.14" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\02.Modules\Identity\Identity.Infrastructure\Identity.Infrastructure.csproj" />
+		<ProjectReference Include="..\02.Modules\Ecommerce\Ecommerce.Application\ECommerce.Application.csproj" />
+		<ProjectReference Include="..\02.Modules\Ecommerce\Ecommerce.Infrastructure\ECommerce.Infrastructure.csproj" />
+		<ProjectReference Include="..\02.Modules\Inventory\Inventory.Application\Inventory.Application.csproj" />
+		<ProjectReference Include="..\02.Modules\Inventory\Inventory.Infrastructure\Inventory.Infrastructure.csproj" />
+	</ItemGroup>
+</Project>

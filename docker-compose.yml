@@ -1,0 +1,59 @@
+services:
+  # ASP.NET API
+  api:
+    build:
+      context: .                                              # root solution
+      dockerfile: src/04.API/Dockerfile   # path tới Dockerfile
+    container_name: supplychain_api
+    ports:
+      - "5013:5013"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5013
+ 
+      # SQL Server trên Windows host - dùng SQL Auth (Windows Auth không chạy được trong Linux container)
+      - ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database=SupplyChain;User Id=sa;Password=admin1;TrustServerCertificate=True
+ 
+      # Redis
+      - Redis__ConnectionString=redis:6379
+ 
+      # Stripe
+      - Stripe__SecretKey=sk_test_51THOusRrHqwghCfEF9ivr0wzoeiZ0ETgJEd9PAYV8OuY8eiGTYo8DoPEWY2gUFs8382JmH6uTiLaRxfaetjyZ1Re00gk26xiHb
+      - Stripe__PublishableKey=pk_test_51THOusRrHqwghCfEzmndnJ2uuIEWxIt6WAlyGpbSo4oNJMDq8TrRqGbpm7sACrTYq36NoKzwMIhMc5ZGRDrvOsSQ00EjVdy7xg
+      - Stripe__WebhookSecret=whsec_2c0a58f983efad2928b45ccb02519c6e52033278b4647c810d9972de894cdb66
+ 
+    depends_on:
+      - redis
+    networks:
+      - supplychain_net
+ 
+  # Redis
+  redis:
+    image: redis:7
+    container_name: supplychain_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - supplychain_net
+ 
+  # Stripe CLI - forward webhook về api container
+  stripe-cli:
+    image: stripe/stripe-cli
+    container_name: supplychain_stripe
+    # dùng tên service "api" thay vì host.docker.internal vì cùng network
+    command: listen --forward-to http://api:5013/api/webhook/stripe
+    environment:
+      - STRIPE_API_KEY=sk_test_51THOusRrHqwghCfEF9ivr0wzoeiZ0ETgJEd9PAYV8OuY8eiGTYo8DoPEWY2gUFs8382JmH6uTiLaRxfaetjyZ1Re00gk26xiHb
+    depends_on:
+      - api
+    networks:
+      - supplychain_net
+ 
+volumes:
+  redis_data:
+ 
+networks:
+  supplychain_net:
+    driver: bridge
