@@ -22,5 +22,11 @@ namespace ECommerce.Infrastructure.Repositories
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
             return order;
         }
+
+        public async Task<List<Order>> GetOrdersWithLinesByUserId(int userId, CancellationToken cancellationToken = default)
+        {
+            var orders = await _context.Orders.Where(o => o.UserId == userId).Include(o => o.Items).ToListAsync(cancellationToken);
+            return orders;
+        }
     }
 }

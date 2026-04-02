@@ -1,6 +1,7 @@
 ﻿using Inventory.Application.Interfaces.Repositories;
 using Inventory.Application.Interfaces.Services;
 using Inventory.Domain.Entities.Inventory;
+using Inventory.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.DTOs;
 
@@ -12,6 +13,66 @@ namespace Inventory.Application.Services
         public InventoryService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+        }
+
+        public async Task DecreaseStockInLayers(int orderId, CancellationToken cancellationToken = default)
+        {
+            const int maxAttempts = 3;
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try
+                {
+                    var reservations = await _unitOfWork.InventoryReservationRepository.GetReservationBySource(orderId, "Order", cancellationToken);
+                    var layerIds = reservations.Select(r => r.LayerId).ToList();
+                    var layers = await _unitOfWork.InventoryCostLayerRepository.GetByIdsAsync(layerIds, cancellationToken);
+                    var layersDic = layers.ToDictionary(l => l.Id, l => l);
+
+                    foreach (var reservation in reservations)
+                    {
+                        int layerId = reservation.LayerId;
+                        var reserveQty = reservation.ReservedQty;
+                        var layer = layersDic[layerId];
+
+                        layer.RemainingQty -= reserveQty;
+                        layer.ReservedQty -= reserveQty;
+
+                        // Ledger
+                        var ledger = new InventoryLedger
+                        {
+                            ProductId = reservation.ProductId,
+                            WarehouseId = layer.WarehouseId,
+                            TransactionType = InventoryTransactionType.Issue,
+                            ReferenceId = orderId,
+                            ReferenceType = "Order",
+                            QuantityIn = 0,
+                            QuantityOut = reserveQty,
+                            UnitCost = layer.UnitCost,
+                            TotalCost = layer.UnitCost * reserveQty
+                        };
+                        await _unitOfWork.InventoryLedgerRepository.AddAsync(ledger);
+                    }
+
+                    // Concurrency handling: If another transaction has modified the same inventory layers, a DbUpdateConcurrencyException will be thrown, and we can retry the operation.
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    return;
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    if (attempt == maxAttempts) throw;
+
+                    Console.WriteLine($"Concurrency conflict on attempt {attempt}. Retrying...");
+
+                    // RELOAD: get the newest values from database and retry
+                    foreach (var entry in ex.Entries)
+                    {
+                        await entry.ReloadAsync(cancellationToken);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception(ex.Message);
+                }
+            }
         }
 
         public async Task<List<ReserveDto>> ReserveFIFOAsync(List<FIFOItemDto> items, CancellationToken cancellationToken = default)

@@ -2,7 +2,7 @@ services:
   # ASP.NET API
   api:
     build:
-      context: .                                              # root solution
+      context: .    # root solution
       dockerfile: src/04.API/Dockerfile   # path tới Dockerfile
     container_name: supplychain_api
     ports:
@@ -23,7 +23,8 @@ services:
       - Stripe__WebhookSecret=whsec_2c0a58f983efad2928b45ccb02519c6e52033278b4647c810d9972de894cdb66
  
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy # Chờ Redis "khỏe" mới chạy API
     networks:
       - supplychain_net
  
@@ -33,6 +34,11 @@ services:
     container_name: supplychain_redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - redis_data:/data
     networks:

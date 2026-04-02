@@ -7,5 +7,6 @@ namespace ECommerce.Application.Interfaces.Services
         Task<List<ReserveDto>> ReserveFIFOAsync(List<FIFOItemDto> items, CancellationToken cancellationToken = default);
         Task<Dictionary<int, ProductSellingPrice>> GetProductsSellingPrice(List<int> productIds, CancellationToken cancellationToken = default);
         Task<ProductSellingPrice> GetProductSellingPrice(int productId, CancellationToken cancellationToken = default);
+        Task DecreaseStockInLayers(int orderId, CancellationToken cancellationToken = default);
     }
 }

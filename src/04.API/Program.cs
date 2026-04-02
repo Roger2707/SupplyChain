@@ -79,9 +79,20 @@ builder.Services.AddEcommerceServices();
 
 #region Redis Cache
 
-var redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+var redisConnectionString = builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379";
+
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-    ConnectionMultiplexer.Connect(redisConnectionString));
+{
+    var configuration = ConfigurationOptions.Parse(redisConnectionString, true);
+
+    // Enable DNS resolution for Redis hostnames, especially useful in containerized environments
+    configuration.ResolveDns = true;
+
+    // allowing the application to start even if Redis is down, it will retry connecting when needed
+    configuration.AbortOnConnectFail = false;
+
+    return ConnectionMultiplexer.Connect(configuration);
+});
 
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
 

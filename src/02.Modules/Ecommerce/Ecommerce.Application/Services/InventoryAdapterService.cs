@@ -29,5 +29,10 @@ namespace ECommerce.Application.Services
         {
             return await _inventoryService.ReserveFIFOAsync(items, cancellationToken);
         }
+
+        public async Task DecreaseStockInLayers(int orderId, CancellationToken cancellationToken = default)
+        {
+            await _inventoryService.DecreaseStockInLayers(orderId, cancellationToken);
+        }
     }
 }

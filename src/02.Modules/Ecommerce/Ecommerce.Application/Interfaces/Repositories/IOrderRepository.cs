@@ -6,5 +6,6 @@ namespace ECommerce.Application.Interfaces.Repositories
     {
         Task<List<Order>> GetAllWithLinesAsync(CancellationToken cancellationToken = default);
         Task<Order> GetWithLinesAsync(int orderId, CancellationToken cancellationToken = default);
+        Task<List<Order>> GetOrdersWithLinesByUserId(int userId, CancellationToken cancellationToken = default);
     }
 }
