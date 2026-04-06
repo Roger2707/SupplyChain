@@ -1,22 +1,25 @@
+using ECommerce.Application.Consumers;
 using ECommerce.Infrastructure.Data;
+using ECommerce.Infrastructure.Services;
 using Identity.Infrastructure.Data;
+using Identity.Infrastructure.Seed;
+using Identity.Infrastructure.Services;
+using Inventory.Infrastructure.Data;
 using Inventory.Infrastructure.Seed;
 using Inventory.Infrastructure.Services;
-using SupplyChain.WebApi.Middleware;
-using SupplyChain.WebApi.Middlewares;
-using SupplyChain.WebApi.Policies;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using StackExchange.Redis;
-using Identity.Infrastructure.Services;
-using Identity.Infrastructure.Seed;
-using Inventory.Infrastructure.Data;
-using SharedKernel.Services;
+using Quartz;
 using SharedKernel.Interfaces;
+using SharedKernel.Services;
+using StackExchange.Redis;
+using SupplyChain.WebApi.Middleware;
+using SupplyChain.WebApi.Middlewares;
+using SupplyChain.WebApi.Policies;
 using SupplyChain.WebApi.Services;
-using ECommerce.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);    
 
@@ -72,11 +75,6 @@ builder.Services.AddDbContext<ECommerceDbContext>(options =>
          .MigrationsHistoryTable("__EFMigrationsHistory_ECommerce")));
 
 
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-builder.Services.AddInventoryServices();
-builder.Services.AddIdentityServices();
-builder.Services.AddEcommerceServices();
-
 #region Redis Cache
 
 var redisConnectionString = builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379";
@@ -97,6 +95,47 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 #endregion
+
+#region MassTransit Configuration
+
+// 1. Register Quartz Service (In order to use ISchedulerFactory)
+builder.Services.AddQuartz(q =>
+{
+   
+});
+
+// 2. Register Quartz Hosted Service 
+builder.Services.AddQuartzHostedService(opt =>
+{
+    opt.WaitForJobsToComplete = true;
+});
+
+// 3. Config MassTransit
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<OrderPaymentTimeoutConsumer>();
+    x.AddMessageScheduler(new Uri("queue:quartz"));
+    // Register Consumers Quartz
+    x.AddQuartzConsumers();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        var rabbitHost = builder.Configuration["RabbitMQ:Host"] ?? "localhost";
+        cfg.Host(rabbitHost, "/");
+
+        // IMPORTANT: Set MassTransit use Quartz to Scheduler
+        cfg.UsePublishMessageScheduler();
+
+        cfg.ConfigureEndpoints(context);
+    });
+});
+
+#endregion
+
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddInventoryServices();
+builder.Services.AddIdentityServices();
+builder.Services.AddEcommerceServices();
 
 builder.Services.AddScoped<SeedIdentityService>();
 builder.Services.AddScoped<SeederService>();

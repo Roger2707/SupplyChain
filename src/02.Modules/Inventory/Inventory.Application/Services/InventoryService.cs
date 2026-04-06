@@ -15,6 +15,31 @@ namespace Inventory.Application.Services
             _unitOfWork = unitOfWork;
         }
 
+        public async Task CancelReserveStockInLayers(int orderId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var reservations = await _unitOfWork.InventoryReservationRepository.GetReservationBySource(orderId, "Order", cancellationToken);
+                var layerIds = reservations.Select(r => r.LayerId).ToList();
+                var layers = await _unitOfWork.InventoryCostLayerRepository.GetByIdsAsync(layerIds, cancellationToken);
+                var layersDic = layers.ToDictionary(l => l.Id, l => l);
+
+                foreach (var reservation in reservations)
+                {
+                    int layerId = reservation.LayerId;
+                    var reserveQty = reservation.ReservedQty;
+                    var layer = layersDic[layerId];
+
+                    layer.ReservedQty -= reserveQty;
+                }
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
         public async Task DecreaseStockInLayers(int orderId, CancellationToken cancellationToken = default)
         {
             const int maxAttempts = 3;

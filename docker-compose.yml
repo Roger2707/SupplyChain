@@ -21,10 +21,16 @@ services:
       - Stripe__SecretKey=sk_test_51THOusRrHqwghCfEF9ivr0wzoeiZ0ETgJEd9PAYV8OuY8eiGTYo8DoPEWY2gUFs8382JmH6uTiLaRxfaetjyZ1Re00gk26xiHb
       - Stripe__PublishableKey=pk_test_51THOusRrHqwghCfEzmndnJ2uuIEWxIt6WAlyGpbSo4oNJMDq8TrRqGbpm7sACrTYq36NoKzwMIhMc5ZGRDrvOsSQ00EjVdy7xg
       - Stripe__WebhookSecret=whsec_2c0a58f983efad2928b45ccb02519c6e52033278b4647c810d9972de894cdb66
+
+      # ... (giữ nguyên các config cũ) ...
+      - RabbitMQ__Host=rabbitmq
  
     depends_on:
       redis:
         condition: service_healthy # Chờ Redis "khỏe" mới chạy API
+
+      rabbitmq:        # Đảm bảo RabbitMQ lên trước API
+        condition: service_started
     networks:
       - supplychain_net
  
@@ -56,7 +62,16 @@ services:
       - api
     networks:
       - supplychain_net
- 
+
+   # RabbitMQ
+  rabbitmq:
+     image: rabbitmq:3-management
+     container_name: supplychain_rabbitmq
+     ports:
+        - "5672:5672"   # Cổng kết nối của MassTransit
+        - "15672:15672" # Cổng giao diện quản lý (Username/Pass: guest/guest)
+     networks:
+        - supplychain_net
 volumes:
   redis_data:
  

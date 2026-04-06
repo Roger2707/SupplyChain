@@ -34,5 +34,10 @@ namespace ECommerce.Application.Services
         {
             await _inventoryService.DecreaseStockInLayers(orderId, cancellationToken);
         }
+
+        public async Task CancelReserveStockInLayers(int orderId, CancellationToken cancellationToken = default)
+        {
+            await _inventoryService.CancelReserveStockInLayers(orderId, cancellationToken);
+        }
     }
 }

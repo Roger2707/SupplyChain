@@ -3,6 +3,8 @@ using ECommerce.Application.DTOs.Orders;
 using ECommerce.Application.Interfaces.Repositories;
 using ECommerce.Application.Interfaces.Services;
 using ECommerce.Domain.Entities.Orders;
+using MassTransit;
+using SharedKernel.Contracts;
 using SharedKernel.Entities;
 using System.Transactions;
 
@@ -13,12 +15,14 @@ namespace ECommerce.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IOrderService _orderService;
         private readonly IStripeService _stripeService;
+        private readonly IMessageScheduler _scheduler;
 
-        public CheckoutService(IUnitOfWork unitOfWork, IOrderService orderService, IStripeService stripeService)
+        public CheckoutService(IUnitOfWork unitOfWork, IOrderService orderService, IStripeService stripeService, IMessageScheduler scheduler)
         {
             _unitOfWork = unitOfWork;
             _orderService = orderService;
             _stripeService = stripeService;
+            _scheduler = scheduler;
         }
 
         public async Task<Result<CheckoutResponseDto>> CheckoutAsync(OrderCreateDto dto, CancellationToken ct)
@@ -44,10 +48,17 @@ namespace ECommerce.Application.Services
                     // 3. Update Order (Tracked)
                     order.PaymentIntentId = intent.PaymentIntentId;
                     order.ClientSecret = intent.ClientSecret;
+
                     await _unitOfWork.SaveChangesAsync(ct);
 
                     // 4. If all steps succeed -> Transaction will Commit
                     scope.Complete();
+
+                    // 5. Schedule a message to check payment status after 15 minutes (Eventual Consistency)
+                    await _scheduler.SchedulePublish(
+                        DateTime.UtcNow.AddSeconds(30),
+                        new OrderPaymentTimeoutCheck(order.Id)
+                    );
 
                     return Result<CheckoutResponseDto>.Success(new CheckoutResponseDto
                     {

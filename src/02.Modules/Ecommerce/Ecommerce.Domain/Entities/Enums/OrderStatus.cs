@@ -6,6 +6,7 @@ namespace ECommerce.Domain.Entities.Enums
     {
         Pending,
         Paid,
+        Cancelled,
         Shipping,
         Shipped,
     }

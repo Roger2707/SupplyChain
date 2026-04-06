@@ -8,5 +8,6 @@ namespace ECommerce.Application.Interfaces.Services
         Task<Dictionary<int, ProductSellingPrice>> GetProductsSellingPrice(List<int> productIds, CancellationToken cancellationToken = default);
         Task<ProductSellingPrice> GetProductSellingPrice(int productId, CancellationToken cancellationToken = default);
         Task DecreaseStockInLayers(int orderId, CancellationToken cancellationToken = default);
+        Task CancelReserveStockInLayers(int orderId, CancellationToken cancellationToken = default);
     }
 }
