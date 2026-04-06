@@ -24,6 +24,7 @@ namespace SupplyChain.WebApi.Controllers
             _webhookSecret = _configuration["Stripe:WebhookSecret"];
         }
 
+        // stripe payment_intents confirm payment_intent_id --payment-method=pm_card_visa
         [AllowAnonymous]
         [HttpPost]
         public async Task<ActionResult> HandleWebhookAsync(CancellationToken cancellationToken = default)

@@ -17,6 +17,7 @@ namespace ECommerce.Infrastructure.Services
             services.AddScoped<IBasketService, BasketService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IStripeService, StripeService>();
+            services.AddScoped<ICheckoutService, CheckoutService>();
             services.AddScoped<IInventoryAdapterService, InventoryAdapterService>();
 
             // Register Dapper query services (read-model)
