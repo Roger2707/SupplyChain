@@ -12,6 +12,7 @@ namespace ECommerce.Domain.Entities.Orders
         public decimal TotalAmount { get; set; } = 0;
         public string PaymentIntentId { get; set; } = string.Empty;
         public string ClientSecret { get; set; } = string.Empty;
+        public string CancelReason { get; set; } = string.Empty;
         public List<OrderItem> Items { get; set; } = new();
     }
 }

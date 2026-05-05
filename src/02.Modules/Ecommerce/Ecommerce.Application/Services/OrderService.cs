@@ -1,14 +1,10 @@
 ﻿using ECommerce.Application.DTOs.Baskets;
-using ECommerce.Application.DTOs.Checkout;
 using ECommerce.Application.DTOs.Orders;
 using ECommerce.Application.Interfaces.Repositories;
 using ECommerce.Application.Interfaces.Services;
-using ECommerce.Domain.Entities.Enums;
 using ECommerce.Domain.Entities.Orders;
-using SharedKernel.DTOs;
 using SharedKernel.Entities;
 using SharedKernel.Interfaces;
-using System.Transactions;
 
 namespace ECommerce.Application.Services
 {
@@ -17,14 +13,12 @@ namespace ECommerce.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUser;
         private readonly IBasketService _basketService;
-        private readonly IInventoryAdapterService _inventoryAdapterService;
 
-        public OrderService(IUnitOfWork unitOfWork, ICurrentUserService currentUser, IBasketService basketService, IInventoryAdapterService inventoryAdapterService)
+        public OrderService(IUnitOfWork unitOfWork, ICurrentUserService currentUser, IBasketService basketService)
         {
             _unitOfWork = unitOfWork;
             _currentUser = currentUser;
             _basketService = basketService;
-            _inventoryAdapterService = inventoryAdapterService;
         }
 
         #region GETs
@@ -46,90 +40,29 @@ namespace ECommerce.Application.Services
 
         #endregion
 
-        #region Order / Checkout
+        #region Place Order
 
         public async Task<Result<Order>> PlaceOrderAsync(OrderCreateDto orderCreateDto, CancellationToken cancellationToken)
         {
+            // 1. Validate
             ValidateOrderCreate(orderCreateDto.Address, orderCreateDto.BasketId);
-            var basket = await ValidateBasket(cancellationToken);
 
-            // 1. Create Order Header (in order to get OrderId)
-            var order = await CreateOrderAsync(basket, orderCreateDto.Address, cancellationToken);
+            // 2. Create Order(Header)
+            var order = await CreateOrderAsync(orderCreateDto.BasketId, orderCreateDto.Address, cancellationToken);
 
-            // 2. Inventory Check & Reserve
-            var reservesDto = await _inventoryAdapterService.ReserveFIFOAsync(basket.Items.Select(i => new FIFOItemDto
-            {
-                ProductId = i.ProductId,
-                ProductName = i.ProductName,
-                NeccessaryQty = i.Quantity,
-                SourceId = order.Id,
-                SourceType = "Order"
-            }).ToList(), cancellationToken);
-
-            // Map to ProductSellingPrice
-            var productIds = reservesDto.Select(l => l.ProductId).ToList();
-            var productsSellingPriceDic = await _inventoryAdapterService.GetProductsSellingPrice(productIds, cancellationToken);
-
-            // 3. Create Order Items & Calculate Total
-            order.Items = reservesDto.Select(r => new OrderItem
-            {
-                OrderId = order.Id,
-                ProductId = r.ProductId,
-                ProductName = basket.Items.First(i => i.ProductId == r.ProductId).ProductName,
-                Quantity = r.ReservedQty,
-                UnitCost = r.UnitCost,
-                UnitPrice = productsSellingPriceDic.TryGetValue(r.ProductId, out var productSellingPrice) ? productSellingPrice.SellingPrice : 0,
-            }).ToList();
-            order.TotalAmount = order.Items.Sum(i => i.LineTotal);
-
-            // 4. Update Order with Items & Total
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            // 5. Clear Basket
-            await _basketService.ClearBasketAsync(cancellationToken);
-
-            // 7. Map to DTO & Return
+            // 3. Map to DTO & Return
             return Result<Order>.Success(order);
-        }
-
-        public async Task ProcessCheckoutSuccessAsync(int orderId, string paymentIntentId, CancellationToken cancellationToken)
-        {
-            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-            {
-                try
-                {
-                    var order = await _unitOfWork.OrderRepository.GetWithLinesAsync(orderId, cancellationToken);
-
-                    // Idempotency
-                    if (order == null || order.OrderStatus == OrderStatus.Paid)
-                        return;
-
-                    order.OrderStatus = OrderStatus.Paid;
-                    order.PaymentIntentId = paymentIntentId;
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                    // Export Stock
-                    await _inventoryAdapterService.DecreaseStockInLayers(orderId, cancellationToken);
-
-                    scope.Complete();
-                }
-                catch (Exception ex)
-                {
-                    // If any exception occurs -> Transaction will Rollback
-                    throw new Exception(ex.Message);
-                }
-            }   
-        }
+        }       
 
         #endregion
 
         #region CRUDs
 
-        private async Task<Order> CreateOrderAsync(BasketDto basket, string orderAddress, CancellationToken cancellationToken)
+        private async Task<Order> CreateOrderAsync(int basketId, string orderAddress, CancellationToken cancellationToken)
         {
             var order = new Order();
             order.UserId = _currentUser.UserId;
-            order.BasketId = basket.Id;
+            order.BasketId = basketId;
             order.Address = orderAddress;
 
             await _unitOfWork.OrderRepository.AddAsync(order, cancellationToken);
@@ -149,19 +82,6 @@ namespace ECommerce.Application.Services
 
             if (string.IsNullOrWhiteSpace(basketId.ToString()))
                 throw new Exception("User doesn't have basket or basket is empty");
-        }
-
-        private async Task<BasketDto> ValidateBasket(CancellationToken cancellationToken = default)
-        {
-            var basketResult = await _basketService.GetByUserIdAsync(cancellationToken);
-            if (!basketResult.IsSuccess)
-                throw new Exception("Basket is NULL or EMPTY !");
-
-            var basket = basketResult.Data;
-            if (basket.Items.Count == 0)
-                throw new Exception("Basket is NULL or EMPTY !");
-
-            return basket;
         }
 
         private OrderDto MapToDto(Order order)

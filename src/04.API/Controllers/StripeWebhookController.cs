@@ -11,16 +11,16 @@ namespace SupplyChain.WebApi.Controllers
     public class StripeWebhookController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private readonly IOrderService _orderService;
+        private readonly ICheckoutService _checkOutService;
         private readonly string _webhookSecret;
 
         public const string PaymentIntentSucceeded = "payment_intent.succeeded";
         public const string PaymentIntentFailed = "payment_intent.payment_failed";
 
-        public StripeWebhookController(IConfiguration configuration, IOrderService orderService)
+        public StripeWebhookController(IConfiguration configuration, ICheckoutService checkoutService)
         {
             _configuration = configuration;
-            _orderService = orderService;
+            _checkOutService = checkoutService; 
             _webhookSecret = _configuration["Stripe:WebhookSecret"];
         }
 
@@ -45,7 +45,7 @@ namespace SupplyChain.WebApi.Controllers
                     if (paymentIntent.Metadata.TryGetValue("OrderId", out var orderIdStr))
                     {
                         var orderId = CF.GetInt(orderIdStr);
-                        await _orderService.ProcessCheckoutSuccessAsync(orderId, paymentIntent.Id, cancellationToken);
+                        await _checkOutService.CheckoutSuccessAsync(orderId, paymentIntent.Id, cancellationToken);
                     }
                 }
 

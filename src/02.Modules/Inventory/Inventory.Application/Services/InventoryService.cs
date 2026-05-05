@@ -147,6 +147,7 @@ namespace Inventory.Application.Services
                             reserveDtos.Add(new ReserveDto
                             {
                                 ProductId = reservation.ProductId,
+                                ProductName = item.ProductName,
                                 SourceId = reservation.SourceId,
                                 ReservedQty = reservation.ReservedQty,
                                 UnitCost = reservation.UnitCost,

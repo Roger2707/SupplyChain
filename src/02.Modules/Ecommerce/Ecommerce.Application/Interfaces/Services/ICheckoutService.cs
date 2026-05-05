@@ -7,5 +7,6 @@ namespace ECommerce.Application.Interfaces.Services
     public interface ICheckoutService
     {
         Task<Result<CheckoutResponseDto>> CheckoutAsync(OrderCreateDto dto, CancellationToken cancellationToken);
+        Task CheckoutSuccessAsync(int orderId, string paymentIntentId, CancellationToken cancellationToken);
     }
 }

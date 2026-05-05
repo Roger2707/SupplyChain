@@ -1,9 +1,10 @@
-using ECommerce.Application.Consumers;
+﻿using ECommerce.Application.Consumers;
 using ECommerce.Infrastructure.Data;
 using ECommerce.Infrastructure.Services;
 using Identity.Infrastructure.Data;
 using Identity.Infrastructure.Seed;
 using Identity.Infrastructure.Services;
+using Inventory.Application.Consumers;
 using Inventory.Infrastructure.Data;
 using Inventory.Infrastructure.Seed;
 using Inventory.Infrastructure.Services;
@@ -98,33 +99,47 @@ builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 #region MassTransit Configuration
 
-// 1. Register Quartz Service (In order to use ISchedulerFactory)
-builder.Services.AddQuartz(q =>
-{
-   
-});
+builder.Services.AddQuartz(q => { });
+builder.Services.AddQuartzHostedService(opt => opt.WaitForJobsToComplete = true);
 
-// 2. Register Quartz Hosted Service 
-builder.Services.AddQuartzHostedService(opt =>
-{
-    opt.WaitForJobsToComplete = true;
-});
-
-// 3. Config MassTransit
 builder.Services.AddMassTransit(x =>
 {
+    // --- Đăng ký Consumers ---
     x.AddConsumer<OrderPaymentTimeoutConsumer>();
+    x.AddConsumer<ReserveInventoryConsumer>();      // Module Inventory
+    x.AddConsumer<InventoryReservedConsumer>();     // Module ECommerce
+    x.AddConsumer<InventoryFailedConsumer>();       // Module ECommerce
+
     x.AddMessageScheduler(new Uri("queue:quartz"));
-    // Register Consumers Quartz
     x.AddQuartzConsumers();
+
+    // --- Config Outbox ECommerce ---
+    x.AddEntityFrameworkOutbox<ECommerceDbContext>(o =>
+    {
+        o.UseSqlServer();
+        o.UseBusOutbox(); // Tự động đẩy message từ Outbox lên RabbitMQ
+    });
+
+    // --- Config Outbox Inventory (ApplicationDbContext) ---
+    x.AddEntityFrameworkOutbox<ApplicationDbContext>(o =>
+    {
+        o.UseSqlServer();
+        o.UseBusOutbox();
+    });
 
     x.UsingRabbitMq((context, cfg) =>
     {
         var rabbitHost = builder.Configuration["RabbitMQ:Host"] ?? "localhost";
         cfg.Host(rabbitHost, "/");
 
-        // IMPORTANT: Set MassTransit use Quartz to Scheduler
         cfg.UsePublishMessageScheduler();
+
+        // Configuration for Race Condition Inventory Reservation (RowVersion)
+        cfg.ReceiveEndpoint("inventory-reservation-queue", e =>
+        {
+            e.UseMessageRetry(r => r.Incremental(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2)));
+            e.ConfigureConsumer<ReserveInventoryConsumer>(context);
+        });
 
         cfg.ConfigureEndpoints(context);
     });

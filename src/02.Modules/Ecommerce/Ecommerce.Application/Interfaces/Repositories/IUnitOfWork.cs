@@ -1,6 +1,6 @@
 namespace ECommerce.Application.Interfaces.Repositories
 {
-    public interface IUnitOfWork : IDisposable
+    public interface IUnitOfWork
     {
         IBasketRepository BasketRepository { get; }
         IOrderRepository OrderRepository { get; }

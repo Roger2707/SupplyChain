@@ -43,10 +43,4 @@ public abstract class EfUnitOfWorkBase<TContext>
             _transaction = null;
         }
     }
-
-    public void Dispose()
-    {
-        _transaction?.Dispose();
-        Context?.Dispose();
-    }
 }
