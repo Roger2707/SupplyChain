@@ -8,7 +8,7 @@ namespace Inventory.Infrastructure.Repositories
 {
     public class DeliveryRepository : Repository<Delivery>, IDeliveryRepository
     {
-        public DeliveryRepository(ApplicationDbContext context) : base(context)
+        public DeliveryRepository(InventoryDbContext context) : base(context)
         {
         }
 

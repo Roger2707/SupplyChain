@@ -10,7 +10,7 @@ namespace Inventory.Infrastructure.Repositories
     {
         public object DSalesOrderStatus { get; private set; }
 
-        public SalesOrderRepository(ApplicationDbContext context) : base(context)
+        public SalesOrderRepository(InventoryDbContext context) : base(context)
         {
         }
 

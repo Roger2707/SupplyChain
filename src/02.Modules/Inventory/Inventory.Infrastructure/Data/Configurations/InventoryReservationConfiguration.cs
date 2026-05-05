@@ -20,6 +20,11 @@ public class InventoryReservationConfiguration : BaseEntityConfiguration<Invento
             .HasPrecision(18, 4);
 
         builder.Ignore(x => x.TotalAmount);
+
+        // Unique Index: ensure that no row in table has the same data
+        builder
+            .HasIndex(r => new { r.SourceId, r.SourceType, r.RowNumber }) // SourceType: SalesOrder || Order
+            .IsUnique();
     }
 }
 

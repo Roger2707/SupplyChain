@@ -1,4 +1,4 @@
-﻿namespace SupplyChain.WebApi.Middleware
+﻿namespace SupplyChain.WebApi.Middlewares
 {
     public class ExceptionHandlingMiddleware
     {

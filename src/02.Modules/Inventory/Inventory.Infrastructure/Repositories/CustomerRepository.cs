@@ -7,7 +7,7 @@ namespace Inventory.Infrastructure.Repositories;
 
 public class CustomerRepository : Repository<Customer>, ICustomerRepository
 {
-    public CustomerRepository(ApplicationDbContext context) : base(context)
+    public CustomerRepository(InventoryDbContext context) : base(context)
     {
     }
     public async Task<Customer?> GetByCodeAsync(string customerCode, CancellationToken cancellationToken = default)

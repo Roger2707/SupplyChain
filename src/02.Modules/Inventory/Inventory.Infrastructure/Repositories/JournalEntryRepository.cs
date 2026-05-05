@@ -7,7 +7,7 @@ namespace Inventory.Infrastructure.Repositories
 {
     public class JournalEntryRepository : Repository<JournalEntry>, IJournalEntryRepository
     {
-        public JournalEntryRepository(ApplicationDbContext context) : base(context)
+        public JournalEntryRepository(InventoryDbContext context) : base(context)
         {
         }
 

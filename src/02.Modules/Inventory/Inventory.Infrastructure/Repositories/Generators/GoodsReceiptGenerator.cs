@@ -7,9 +7,9 @@ namespace Inventory.Infrastructure.Repositories.Generators
 {
     public class GoodsReceiptGenerator : IGoodsReceiptGenerator
     {
-        private readonly ApplicationDbContext _context;
+        private readonly InventoryDbContext _context;
 
-        public GoodsReceiptGenerator(ApplicationDbContext context)
+        public GoodsReceiptGenerator(InventoryDbContext context)
         {
             _context = context;
         }

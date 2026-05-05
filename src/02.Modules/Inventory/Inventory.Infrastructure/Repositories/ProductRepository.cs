@@ -9,7 +9,7 @@ namespace Inventory.Infrastructure.Repositories
 {
     public class ProductRepository : Repository<Product>, IProductRepository
     {
-        public ProductRepository(ApplicationDbContext context) : base(context)
+        public ProductRepository(InventoryDbContext context) : base(context)
         {
         }
 

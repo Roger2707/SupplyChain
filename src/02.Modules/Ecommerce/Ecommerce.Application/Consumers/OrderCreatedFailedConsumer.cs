@@ -5,10 +5,10 @@ using SharedKernel.Contracts;
 
 namespace ECommerce.Application.Consumers
 {
-    public class InventoryFailedConsumer : IConsumer<InventoryReservationFailed>
+    public class OrderCreatedFailedConsumer : IConsumer<InventoryReservationFailed>
     {
         private readonly IUnitOfWork _unitOfWork;
-        public InventoryFailedConsumer(IUnitOfWork unitOfWork)
+        public OrderCreatedFailedConsumer(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }

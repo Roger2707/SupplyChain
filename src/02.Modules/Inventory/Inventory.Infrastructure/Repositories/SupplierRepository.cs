@@ -7,7 +7,7 @@ namespace Inventory.Infrastructure.Repositories;
 
 public class SupplierRepository : Repository<Supplier>, ISupplierRepository
 {
-    public SupplierRepository(ApplicationDbContext context) 
+    public SupplierRepository(InventoryDbContext context) 
         : base(context)
     {
     }

@@ -1,17 +1,18 @@
 ﻿using Inventory.Application.Interfaces.Repositories;
 using Inventory.Application.Interfaces.Services;
 using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using SharedKernel.Contracts;
 using SharedKernel.DTOs;
 
 namespace Inventory.Application.Consumers
 {
-    public class ReserveInventoryConsumer : IConsumer<OrderCreated>
+    public class OrderCreatedConsumer : IConsumer<OrderCreated>
     {
         private readonly IInventoryService _inventoryService;
         private readonly IUnitOfWork _unitOfWork;
 
-        public ReserveInventoryConsumer(IInventoryService inventoryService, IUnitOfWork unitOfWork)
+        public OrderCreatedConsumer(IInventoryService inventoryService, IUnitOfWork unitOfWork)
         {
             _inventoryService = inventoryService;
             _unitOfWork = unitOfWork;
@@ -19,6 +20,10 @@ namespace Inventory.Application.Consumers
 
         public async Task Consume(ConsumeContext<OrderCreated> context)
         {
+            var isExisted = await _unitOfWork.InventoryReservationRepository
+                .ExistsAsync(r => r.SourceId == context.Message.OrderId);
+
+            if (isExisted) return;
             try
             {
                 await _unitOfWork.BeginTransactionAsync();
@@ -42,6 +47,12 @@ namespace Inventory.Application.Consumers
                 await context.Publish(new InventoryReserved(context.Message.OrderId, reservedDetails));
 
                 await _unitOfWork.CommitTransactionAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                // THROW: In order to let MassTransit Retry (error temp)
+                throw;
             }
             catch (Exception ex)
             {

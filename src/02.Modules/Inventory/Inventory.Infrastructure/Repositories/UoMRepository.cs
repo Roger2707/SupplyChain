@@ -6,7 +6,7 @@ namespace Inventory.Infrastructure.Repositories
 {
     public class UoMRepository : Repository<UoM>, IUoMRepository
     {
-        public UoMRepository(ApplicationDbContext context) : base(context)
+        public UoMRepository(InventoryDbContext context) : base(context)
         {
         }
     }

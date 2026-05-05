@@ -58,7 +58,7 @@ namespace ECommerce.Application.Services
                     basket.Items.Select(i => new ReserveItemDto(i.ProductId, i.ProductName, i.Quantity)).ToList()
                 ), ct);
 
-                // 4. SaveChange and Commit
+                // 4. SaveChanges and Commit
                 await _unitOfWork.SaveChangesAsync(ct);
                 await _unitOfWork.CommitTransactionAsync(ct);
 

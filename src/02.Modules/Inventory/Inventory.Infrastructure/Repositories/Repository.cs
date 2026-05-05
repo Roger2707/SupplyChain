@@ -5,12 +5,12 @@ using System.Linq.Expressions;
 
 namespace Inventory.Infrastructure.Repositories;
 
-public class Repository<T> : EfRepository<ApplicationDbContext, T>, IRepository<T> where T : class
+public class Repository<T> : EfRepository<InventoryDbContext, T>, IRepository<T> where T : class
 {
-    protected readonly ApplicationDbContext _context;
+    protected readonly InventoryDbContext _context;
     protected readonly Microsoft.EntityFrameworkCore.DbSet<T> _dbSet;
 
-    public Repository(ApplicationDbContext context)
+    public Repository(InventoryDbContext context)
         : base(context)
     {
         _context = context;

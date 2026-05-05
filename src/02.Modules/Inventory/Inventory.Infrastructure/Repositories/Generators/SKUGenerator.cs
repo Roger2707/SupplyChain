@@ -7,9 +7,9 @@ namespace Inventory.Infrastructure.Repositories.Generators
 {
     public class SKUGenerator : ISkuGenerator
     {
-        private readonly ApplicationDbContext _context;
+        private readonly InventoryDbContext _context;
 
-        public SKUGenerator(ApplicationDbContext context)
+        public SKUGenerator(InventoryDbContext context)
         {
             _context = context;
         }

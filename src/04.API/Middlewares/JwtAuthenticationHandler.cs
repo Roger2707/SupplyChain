@@ -6,7 +6,7 @@ using SharedKernel.Interfaces;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 
-namespace SupplyChain.WebApi.Middleware;
+namespace SupplyChain.WebApi.Middlewares;
 
 public class JwtAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {

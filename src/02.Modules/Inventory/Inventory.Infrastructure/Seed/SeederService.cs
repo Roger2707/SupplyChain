@@ -20,7 +20,7 @@ namespace Inventory.Infrastructure.Seed
 {
     public class SeederService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly InventoryDbContext _context;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IGoodsReceiptService _goodsReceiptService;
         private readonly ISalesOrderService _salesOrderService;
@@ -29,7 +29,7 @@ namespace Inventory.Infrastructure.Seed
         private readonly IProductService _productService;
         private readonly ICacheService _cacheService;
 
-        public SeederService(ApplicationDbContext context, IUnitOfWork unitOfWork, IGoodsReceiptService goodsReceiptService, ISalesOrderService salesOrderService, IDeliveryService deliveryService, IInvoiceService invoiceService, IProductService productService, ICacheService cacheService)
+        public SeederService(InventoryDbContext context, IUnitOfWork unitOfWork, IGoodsReceiptService goodsReceiptService, ISalesOrderService salesOrderService, IDeliveryService deliveryService, IInvoiceService invoiceService, IProductService productService, ICacheService cacheService)
         {
             _context = context;
             _unitOfWork = unitOfWork;

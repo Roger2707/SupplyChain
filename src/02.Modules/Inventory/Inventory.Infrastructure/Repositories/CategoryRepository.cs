@@ -6,7 +6,7 @@ namespace Inventory.Infrastructure.Repositories
 {
     public class CategoryRepository : Repository<Category>, ICategoryRepository
     {
-        public CategoryRepository(ApplicationDbContext context) : base(context)
+        public CategoryRepository(InventoryDbContext context) : base(context)
         {
         }
     }

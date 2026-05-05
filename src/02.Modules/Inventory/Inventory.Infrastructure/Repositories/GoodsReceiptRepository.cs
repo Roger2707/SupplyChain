@@ -7,7 +7,7 @@ namespace Inventory.Infrastructure.Repositories;
 
 public class GoodsReceiptRepository : Repository<GoodsReceipt>, IGoodsReceiptRepository
 {
-    public GoodsReceiptRepository(ApplicationDbContext context) : base(context)
+    public GoodsReceiptRepository(InventoryDbContext context) : base(context)
     {
     }
 

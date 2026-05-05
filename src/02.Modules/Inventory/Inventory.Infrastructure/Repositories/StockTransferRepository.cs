@@ -6,7 +6,7 @@ namespace Inventory.Infrastructure.Repositories;
 
 public class StockTransferRepository : Repository<StockTransfer>, IStockTransferRepository
 {
-    public StockTransferRepository(ApplicationDbContext context) : base(context)
+    public StockTransferRepository(InventoryDbContext context) : base(context)
     {
     }
 }

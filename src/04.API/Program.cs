@@ -17,12 +17,11 @@ using Quartz;
 using SharedKernel.Interfaces;
 using SharedKernel.Services;
 using StackExchange.Redis;
-using SupplyChain.WebApi.Middleware;
 using SupplyChain.WebApi.Middlewares;
 using SupplyChain.WebApi.Policies;
 using SupplyChain.WebApi.Services;
 
-var builder = WebApplication.CreateBuilder(args);    
+var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -57,6 +56,8 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+#region DbContext Configurations
+
 // Database Configuration (SQL Server)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -65,7 +66,7 @@ builder.Services.AddDbContext<IdentityDbContext>(options =>
         b.MigrationsAssembly("Identity.Infrastructure")
          .MigrationsHistoryTable("__EFMigrationsHistory_Identity")));
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<InventoryDbContext>(options =>
     options.UseSqlServer(connectionString, b =>
         b.MigrationsAssembly("Inventory.Infrastructure")
          .MigrationsHistoryTable("__EFMigrationsHistory_Inventory")));
@@ -75,6 +76,7 @@ builder.Services.AddDbContext<ECommerceDbContext>(options =>
         b.MigrationsAssembly("ECommerce.Infrastructure")
          .MigrationsHistoryTable("__EFMigrationsHistory_ECommerce")));
 
+#endregion
 
 #region Redis Cache
 
@@ -104,11 +106,11 @@ builder.Services.AddQuartzHostedService(opt => opt.WaitForJobsToComplete = true)
 
 builder.Services.AddMassTransit(x =>
 {
-    // --- Đăng ký Consumers ---
-    x.AddConsumer<OrderPaymentTimeoutConsumer>();
-    x.AddConsumer<ReserveInventoryConsumer>();      // Module Inventory
+    // --- Register Consumers ---
+    x.AddConsumer<OrderPaymentTimeoutConsumer>();  // Module ECommerce
+    x.AddConsumer<OrderCreatedConsumer>();      // Module Inventory
     x.AddConsumer<InventoryReservedConsumer>();     // Module ECommerce
-    x.AddConsumer<InventoryFailedConsumer>();       // Module ECommerce
+    x.AddConsumer<OrderCreatedFailedConsumer>();       // Module ECommerce
 
     x.AddMessageScheduler(new Uri("queue:quartz"));
     x.AddQuartzConsumers();
@@ -117,14 +119,16 @@ builder.Services.AddMassTransit(x =>
     x.AddEntityFrameworkOutbox<ECommerceDbContext>(o =>
     {
         o.UseSqlServer();
-        o.UseBusOutbox(); // Tự động đẩy message từ Outbox lên RabbitMQ
+        o.UseBusOutbox(); // Push message from Outbox to RabbitMQ
     });
 
-    // --- Config Outbox Inventory (ApplicationDbContext) ---
-    x.AddEntityFrameworkOutbox<ApplicationDbContext>(o =>
+    // --- Config Outbox Inventory ---
+    x.AddEntityFrameworkOutbox<InventoryDbContext>(o =>
     {
         o.UseSqlServer();
         o.UseBusOutbox();
+
+        o.DisableInboxCleanupService();
     });
 
     x.UsingRabbitMq((context, cfg) =>
@@ -135,10 +139,13 @@ builder.Services.AddMassTransit(x =>
         cfg.UsePublishMessageScheduler();
 
         // Configuration for Race Condition Inventory Reservation (RowVersion)
-        cfg.ReceiveEndpoint("inventory-reservation-queue", e =>
+        cfg.ReceiveEndpoint("order-created-queue", e =>
         {
+            // Block Message (Idempotency) MessageId before going to Consumer
+            e.UseEntityFrameworkOutbox<InventoryDbContext>(context);
+
             e.UseMessageRetry(r => r.Incremental(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2)));
-            e.ConfigureConsumer<ReserveInventoryConsumer>(context);
+            e.ConfigureConsumer<OrderCreatedConsumer>(context);
         });
 
         cfg.ConfigureEndpoints(context);
@@ -146,6 +153,8 @@ builder.Services.AddMassTransit(x =>
 });
 
 #endregion
+
+#region Services
 
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddInventoryServices();
@@ -156,6 +165,8 @@ builder.Services.AddScoped<SeedIdentityService>();
 builder.Services.AddScoped<SeederService>();
 
 builder.Services.AddScoped<Identity.Application.Interfaces.IAuthenticationService, Identity.Application.Services.AuthenticationService>();
+
+#endregion
 
 #region Authentication Configuration
 
@@ -224,7 +235,7 @@ app.UseMiddleware<RequestResponseLoggingMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "InventorySystem API v1");
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "SupplyChain APIs");
     c.RoutePrefix = "swagger"; // swagger UI at /swagger
 });
 

@@ -7,7 +7,7 @@ namespace Inventory.Infrastructure.Repositories
 {
     public class InvoiceRepository : Repository<Invoice>, IInvoiceRepository
     {
-        public InvoiceRepository(ApplicationDbContext context) : base(context)
+        public InvoiceRepository(InventoryDbContext context) : base(context)
         {
         }
 

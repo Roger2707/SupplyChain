@@ -7,7 +7,7 @@ namespace Inventory.Infrastructure.Repositories
 {
     public class InventoryReservationRepository : Repository<InventoryReservation>, IInventoryReservationRepository
     {
-        public InventoryReservationRepository(ApplicationDbContext context) : base(context)
+        public InventoryReservationRepository(InventoryDbContext context) : base(context)
         {
         }
 

@@ -6,7 +6,7 @@ namespace Inventory.Infrastructure.Repositories;
 
 public class InventoryLedgerRepository : Repository<InventoryLedger>, IInventoryLedgerRepository
 {
-    public InventoryLedgerRepository(ApplicationDbContext context) : base(context)
+    public InventoryLedgerRepository(InventoryDbContext context) : base(context)
     {
     }
 }

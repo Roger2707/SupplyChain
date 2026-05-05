@@ -7,7 +7,7 @@ namespace Inventory.Infrastructure.Repositories;
 
 public class PurchaseOrderRepository : Repository<PurchaseOrder>, IPurchaseOrderRepository
 {
-    public PurchaseOrderRepository(ApplicationDbContext context) : base(context)
+    public PurchaseOrderRepository(InventoryDbContext context) : base(context)
     {
     }
 

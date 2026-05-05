@@ -7,9 +7,9 @@ namespace Inventory.Infrastructure.Repositories.Generators
 {
     public class DeliveryGenerator : IDeliveryGenerator
     {
-        private readonly ApplicationDbContext _context;
+        private readonly InventoryDbContext _context;
 
-        public DeliveryGenerator(ApplicationDbContext context)
+        public DeliveryGenerator(InventoryDbContext context)
         {
             _context = context;
         }

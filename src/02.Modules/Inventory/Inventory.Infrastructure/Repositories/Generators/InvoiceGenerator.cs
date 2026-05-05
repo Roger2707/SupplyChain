@@ -7,9 +7,9 @@ namespace Inventory.Infrastructure.Repositories.Generators
 {
     public class InvoiceGenerator : IInvoiceGenerator
     {
-        private readonly ApplicationDbContext _context;
+        private readonly InventoryDbContext _context;
 
-        public InvoiceGenerator(ApplicationDbContext context)
+        public InvoiceGenerator(InventoryDbContext context)
         {
             _context = context;
         }

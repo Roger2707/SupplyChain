@@ -34,9 +34,9 @@ namespace Inventory.Application.Services
                 }
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
-            catch (Exception ex)
+            catch
             {
-                throw new Exception(ex.Message);
+                throw;
             }
         }
 
@@ -93,9 +93,9 @@ namespace Inventory.Application.Services
                         await entry.ReloadAsync(cancellationToken);
                     }
                 }
-                catch (Exception ex)
+                catch
                 {
-                    throw new Exception(ex.Message);
+                    throw;
                 }
             }
         }
@@ -103,7 +103,6 @@ namespace Inventory.Application.Services
         public async Task<List<ReserveDto>> ReserveFIFOAsync(List<FIFOItemDto> items, CancellationToken cancellationToken = default)
         {
             const int maxAttempts = 3;
-
             for (var attempt = 1; attempt <= maxAttempts; attempt++)
             {
                 try
@@ -176,9 +175,9 @@ namespace Inventory.Application.Services
                         await entry.ReloadAsync(cancellationToken);
                     }
                 }  
-                catch (Exception ex)
+                catch
                 {
-                    throw new Exception(ex.Message);
+                    throw;
                 }
             }
 

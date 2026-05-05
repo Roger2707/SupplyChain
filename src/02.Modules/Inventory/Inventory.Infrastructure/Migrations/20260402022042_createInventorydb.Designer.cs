@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Inventory.Infrastructure.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
+    [DbContext(typeof(InventoryDbContext))]
     [Migration("20260402022042_createInventorydb")]
     partial class createInventorydb
     {

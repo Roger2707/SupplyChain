@@ -4,9 +4,9 @@ using SharedKernel.Repositories;
 
 namespace Inventory.Infrastructure.Repositories;
 
-public class UnitOfWork : EfUnitOfWorkBase<ApplicationDbContext>, IUnitOfWork
+public class UnitOfWork : EfUnitOfWorkBase<InventoryDbContext>, IUnitOfWork
 {
-    private readonly ApplicationDbContext _context;
+    private readonly InventoryDbContext _context;
     private readonly Dictionary<Type, object> _repositories;
 
     private IWarehouseRepository? _warehouseRepository;
@@ -27,7 +27,7 @@ public class UnitOfWork : EfUnitOfWorkBase<ApplicationDbContext>, IUnitOfWork
     private IInvoiceRepository? _invoiceRepository;
     private IJournalEntryRepository? _journalEntryRepository;
 
-    public UnitOfWork(ApplicationDbContext context)
+    public UnitOfWork(InventoryDbContext context)
         : base(context)
     {
         _context = context;

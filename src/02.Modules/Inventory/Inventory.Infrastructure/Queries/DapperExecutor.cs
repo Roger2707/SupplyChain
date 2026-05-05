@@ -3,9 +3,9 @@ using SharedKernel.Repositories;
 
 namespace Inventory.Infrastructure.Queries;
 
-public sealed class DapperExecutor : EfDapperExecutorBase<ApplicationDbContext>
+public sealed class DapperExecutor : EfDapperExecutorBase<InventoryDbContext>
 {
-    public DapperExecutor(ApplicationDbContext db) : base(db)
+    public DapperExecutor(InventoryDbContext db) : base(db)
     {
     }
 }

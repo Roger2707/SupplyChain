@@ -7,7 +7,7 @@ namespace Inventory.Infrastructure.Repositories;
 
 public class InventoryCostLayerRepository : Repository<InventoryCostLayer>, IInventoryCostLayerRepository
 {
-    public InventoryCostLayerRepository(ApplicationDbContext context) : base(context)
+    public InventoryCostLayerRepository(InventoryDbContext context) : base(context)
     {
     }
 

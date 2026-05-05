@@ -7,9 +7,9 @@ namespace Inventory.Infrastructure.Repositories.Generators
 {
     public class PurchaseOrderGenerator : IPurchaseOrderGenerator
     {
-        private readonly ApplicationDbContext _context;
+        private readonly InventoryDbContext _context;
 
-        public PurchaseOrderGenerator(ApplicationDbContext context)
+        public PurchaseOrderGenerator(InventoryDbContext context)
         {
             _context = context;
         }

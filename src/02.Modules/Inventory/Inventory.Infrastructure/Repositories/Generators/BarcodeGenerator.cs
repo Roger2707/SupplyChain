@@ -6,11 +6,11 @@ namespace Inventory.Infrastructure.Repositories.Generators
 {
     public class BarcodeGenerator : IBarcodeGenerator
     {
-        private readonly ApplicationDbContext _context;
+        private readonly InventoryDbContext _context;
 
         private const string CountryPrefix = "893"; // VietNam's GS1 prefix
         private const string CompanyCode = "1234";
-        public BarcodeGenerator(ApplicationDbContext context)
+        public BarcodeGenerator(InventoryDbContext context)
         {
             _context = context;
         }

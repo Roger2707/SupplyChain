@@ -14,7 +14,7 @@ using SharedKernel.Entities;
 
 namespace Inventory.Infrastructure.Data;
 
-public class ApplicationDbContext : DbContext
+public class InventoryDbContext : DbContext
 {
     public DbSet<Warehouse> Warehouses { get; set; }
     public DbSet<Region> Regions { get; set; }
@@ -61,7 +61,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Account> Accounts { get; set; }
     public DbSet<JournalEntry> JournalEntries { get; set; }
 
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+    public InventoryDbContext(DbContextOptions<InventoryDbContext> options) : base(options)
     {
     }
 
@@ -100,7 +100,7 @@ public class ApplicationDbContext : DbContext
             .IncrementsBy(1);
 
         // Apply all entity configurations
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(InventoryDbContext).Assembly);
         
         // Global query filter for soft delete
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
