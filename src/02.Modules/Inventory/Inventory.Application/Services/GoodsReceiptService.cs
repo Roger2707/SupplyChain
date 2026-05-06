@@ -55,6 +55,9 @@ public class GoodsReceiptService : IGoodsReceiptService
         if (poExist == null)
             return Result<GoodsReceiptDto>.Failure($"PurchaseOrder with ID {createGoodsReceipt.PurchaseOrderId} not found.");
 
+        if (poExist.Status != PurchaseOrderStatus.Approved && poExist.Status != PurchaseOrderStatus.PartiallyReceived)
+            return Result<GoodsReceiptDto>.Failure("GoodsReceipt can only be created from Approved or PartiallyReceived PurchaseOrder.");
+
         var warehouseExist = await _unitOfWork.WarehouseRepository.ExistsAsync(w => w.Id == createGoodsReceipt.WarehouseId, cancellationToken);
         if (!warehouseExist)
             return Result<GoodsReceiptDto>.Failure($"Warehouse with ID {createGoodsReceipt.WarehouseId} not found.");
@@ -120,6 +123,9 @@ public class GoodsReceiptService : IGoodsReceiptService
         if (poExist == null)
             return Result<GoodsReceiptDto>.Failure($"PurchaseOrder with ID {exist.PurchaseOrderId} not found.");
 
+        if (poExist.Status == PurchaseOrderStatus.Cancelled || poExist.Status == PurchaseOrderStatus.Completed)
+            return Result<GoodsReceiptDto>.Failure("Cannot update GoodsReceipt because its PurchaseOrder is already Cancelled/Completed.");
+
         var warehouseExist = await _unitOfWork.WarehouseRepository.ExistsAsync(w => w.Id == updateGoodsReceipt.WarehouseId, cancellationToken);
         if (!warehouseExist)
             return Result<GoodsReceiptDto>.Failure($"Warehouse with ID {updateGoodsReceipt.WarehouseId} not found.");
@@ -152,6 +158,10 @@ public class GoodsReceiptService : IGoodsReceiptService
         {
             return Result<GoodsReceiptDto>.Failure("GoodsReceipt is updated by other user. Let's try again.");
         }
+        catch (Exception ex)
+        {
+            return Result<GoodsReceiptDto>.Failure(ex.Message);
+        }
         var dto = MapToDto(exist);
         return Result<GoodsReceiptDto>.Success(dto);
     }
@@ -161,6 +171,9 @@ public class GoodsReceiptService : IGoodsReceiptService
         var exist = await _unitOfWork.GoodsReceiptRepository.GetWithLinesAsync(id, cancellationToken);
         if (exist == null)
             return Result.Failure($"GoodsReceipt with ID {id} not found.");
+
+        if (exist.Status != ReceiptStatus.Draft)
+            return Result.Failure("Only Draft GoodsReceipt can be deleted.");
 
         exist.IsDeleted = true;
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -183,20 +196,20 @@ public class GoodsReceiptService : IGoodsReceiptService
 
                 var goodsReceiptExist = await _unitOfWork.GoodsReceiptRepository.GetWithLinesAsync(id, cancellationToken);
                 if (goodsReceiptExist == null)
-                    return Result.Failure($"GoodsReceipt with Id: {id} is not existed");
+                    throw new Exception($"GoodsReceipt with Id: {id} is not existed");
 
                 var purchaseOrder = await _unitOfWork.PurchaseOrderRepository.GetWithLinesAsync(goodsReceiptExist.PurchaseOrderId, cancellationToken);
                 if (purchaseOrder == null)
-                    return Result.Failure($"PurchaseOrder with Id: {goodsReceiptExist.PurchaseOrderId} is not existed");
+                    throw new Exception($"PurchaseOrder with Id: {goodsReceiptExist.PurchaseOrderId} is not existed");
 
                 if (purchaseOrder.Status == PurchaseOrderStatus.Draft)
-                    return Result.Failure($"PurchaseOrder is not Approved !");
+                    throw new Exception($"PurchaseOrder is not Approved !");
 
                 if (purchaseOrder.Status == PurchaseOrderStatus.Completed)
-                    return Result.Failure($"PurchaseOrder is already completed !");
+                    throw new Exception($"PurchaseOrder is already completed !");
 
                 if (purchaseOrder.Status == PurchaseOrderStatus.Cancelled)
-                    return Result.Failure($"PurchaseOrder is Cancelled !");
+                    throw new Exception($"PurchaseOrder is Cancelled !");
 
                 goodsReceiptExist.Post();
 
@@ -296,7 +309,7 @@ public class GoodsReceiptService : IGoodsReceiptService
                 };
                 await _unitOfWork.JournalEntryRepository.AddAsync(journalEntry, cancellationToken);
 
-                // SaveChange
+                // SaveChanges
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
 

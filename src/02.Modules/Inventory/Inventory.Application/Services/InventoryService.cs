@@ -66,6 +66,10 @@ namespace Inventory.Application.Services
                         layer.RemainingQty -= reserveQty;
                         layer.ReservedQty -= reserveQty;
 
+                        // Update Reservation
+                        reservation.ReservedQty -= reserveQty;
+                        reservation.IsDeleted = true;
+
                         // Ledger
                         var ledger = new InventoryLedger
                         {

@@ -108,6 +108,7 @@ namespace ECommerce.Application.Services
                         Quantity = 1,
                         ProductName = sellingPriceInfo.Name,
                         UnitPrice = sellingPriceInfo.SellingPrice,
+                        LineTotal = sellingPriceInfo.SellingPrice,
                     };
                     basketDto.Items.Add(newItem);
 

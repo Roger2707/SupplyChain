@@ -58,8 +58,6 @@ namespace Inventory.Application.Services
         {
             try
             {
-                await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
                 #region Validations
 
                 var isCustomerExisted = await _unitOfWork.CustomerRepository
@@ -69,6 +67,8 @@ namespace Inventory.Application.Services
                     return Result<SalesOrderDto>.Failure($"Customer ID {createSalesOrderDto.CustomerId} is not Existed !");
 
                 #endregion
+
+                await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
                 var productIds = createSalesOrderDto.CreateLinesDto.Select(l => l.ProductId).ToList();
                 var productsSellingPriceDic = await _productService.GetProductsSellingPrice(productIds, cancellationToken);
@@ -124,8 +124,6 @@ namespace Inventory.Application.Services
         {
             try
             {
-                await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
                 #region Validations
 
                 var salesOrderExist = await _unitOfWork.SalesOrderRepository.GetWithLinesAsync(id, cancellationToken);
@@ -141,6 +139,8 @@ namespace Inventory.Application.Services
                     return Result<SalesOrderDto>.Failure($"Only Draft Status can be Updated !");
 
                 #endregion
+
+                await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
                 var productIds = updateSalesOrderDto.UpdateLinesDto.Select(l => l.ProductId).ToList();
                 var productsSellingPriceDic = await _productService.GetProductsSellingPrice(productIds, cancellationToken);
@@ -202,6 +202,9 @@ namespace Inventory.Application.Services
             if (salesOrderExist == null)
                 return Result.Failure($"SalesOrder with ID: {id} is not existed !");
 
+            if (salesOrderExist.Status != Domain.Enums.SalesOrderStatus.Draft)
+                return Result.Failure("Only Draft SalesOrder can be deleted.");
+
             salesOrderExist.IsDeleted = true;
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Result.Success();
@@ -220,6 +223,9 @@ namespace Inventory.Application.Services
             var salesOrderExist = await _unitOfWork.SalesOrderRepository.GetWithLinesAsync(id, cancellationToken);
             if (salesOrderExist == null)
                 return Result.Failure($"SalesOrder with ID: {id} is not existed !");
+
+            if (salesOrderExist.Status != Domain.Enums.SalesOrderStatus.Draft)
+                return Result.Failure("Only Draft SalesOrder can be cancelled.");
 
             salesOrderExist.Status = Domain.Enums.SalesOrderStatus.Cancelled;
             await _unitOfWork.SaveChangesAsync(cancellationToken);

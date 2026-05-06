@@ -103,5 +103,6 @@ public class JwtAuthenticationHandler : AuthenticationHandler<AuthenticationSche
             return AuthenticateResult.Fail($"Token validation error: {ex.Message}");
         }
     }
+
 }
 

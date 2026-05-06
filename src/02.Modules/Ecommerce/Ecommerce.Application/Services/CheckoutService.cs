@@ -1,6 +1,7 @@
 ﻿using ECommerce.Application.DTOs.Baskets;
 using ECommerce.Application.DTOs.Checkout;
 using ECommerce.Application.DTOs.Orders;
+using ECommerce.Application.DTOs.Stripes;
 using ECommerce.Application.Interfaces.Repositories;
 using ECommerce.Application.Interfaces.Services;
 using ECommerce.Domain.Entities.Enums;
@@ -61,22 +62,28 @@ namespace ECommerce.Application.Services
                 await _unitOfWork.SaveChangesAsync(ct);
 
                 // 5. Create PaymentIntent with Stripe
-                var intent = await _stripeService.CreatePaymentIntentAsync(
-                    (long)basket.TotalAmount,
-                    "vnd",
-                    order.Id.ToString()
-                );
+                PaymentIntentResponse intent;
+                try
+                {
+                    intent = await _stripeService.CreatePaymentIntentAsync(
+                        (long)basket.TotalAmount,
+                        "vnd",
+                        order.Id.ToString()
+                    );
+                }
+                catch
+                {
+                    await SchedulePaymentTimeoutAsync(order.Id, ct);
+                    throw;
+                }
 
                 // 6. Update Order (Tracked)
                 order.PaymentIntentId = intent.PaymentIntentId;
                 order.ClientSecret = intent.ClientSecret;
                 await _unitOfWork.SaveChangesAsync(ct);
 
-                // 6. Schedule a message to check payment status after 30 second (Eventual Consistency)
-                await _scheduler.SchedulePublish(
-                    DateTime.UtcNow.AddSeconds(30),
-                    new OrderPaymentTimeoutCheck(order.Id)
-                );
+                // 7. Always schedule timeout check for unpaid orders.
+                await SchedulePaymentTimeoutAsync(order.Id, ct);
 
                 return Result<CheckoutResponseDto>.Success(
                     new CheckoutResponseDto
@@ -101,8 +108,8 @@ namespace ECommerce.Application.Services
                 {
                     var order = await _unitOfWork.OrderRepository.GetWithLinesAsync(orderId, cancellationToken);
 
-                    // Idempotency
-                    if (order == null || order.OrderStatus == OrderStatus.Paid)
+                    // Idempotency + state guard: only Pending can transition to Paid.
+                    if (order == null || order.OrderStatus != OrderStatus.Pending)
                         return;
 
                     order.OrderStatus = OrderStatus.Paid;
@@ -161,6 +168,17 @@ namespace ECommerce.Application.Services
                     LineTotal = item.LineTotal
                 }).ToList(),
             };
+        }
+
+        private async Task SchedulePaymentTimeoutAsync(int orderId, CancellationToken ct)
+        {
+            await _scheduler.SchedulePublish(
+                DateTime.UtcNow.AddMinutes(30),
+                new OrderPaymentTimeoutCheck(orderId)
+            );
+
+            // Bus outbox captures scheduled publish and flushes it on SaveChanges.
+            await _unitOfWork.SaveChangesAsync(ct);
         }
 
         #endregion

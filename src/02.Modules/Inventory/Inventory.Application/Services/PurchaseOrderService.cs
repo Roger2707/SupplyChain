@@ -153,6 +153,9 @@ public class PurchaseOrderService : IPurchaseOrderService
         if (po == null)
             return Result.Failure($"PurchaseOrder with ID {id} not found.");
 
+        if (po.Status != PurchaseOrderStatus.Draft)
+            return Result.Failure("Only Draft PurchaseOrder can be deleted.");
+
         po.Delete();
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

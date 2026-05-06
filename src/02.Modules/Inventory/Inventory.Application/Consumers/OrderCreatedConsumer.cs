@@ -1,6 +1,7 @@
 ﻿using Inventory.Application.Interfaces.Repositories;
 using Inventory.Application.Interfaces.Services;
 using MassTransit;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Contracts;
 using SharedKernel.DTOs;
@@ -21,7 +22,7 @@ namespace Inventory.Application.Consumers
         public async Task Consume(ConsumeContext<OrderCreated> context)
         {
             var isExisted = await _unitOfWork.InventoryReservationRepository
-                .ExistsAsync(r => r.SourceId == context.Message.OrderId);
+                .ExistsAsync(r => r.SourceId == context.Message.OrderId && r.SourceType == "Order");
 
             if (isExisted) return;
             try
@@ -50,11 +51,23 @@ namespace Inventory.Application.Consumers
             {
                 throw;
             }
+            catch (DbUpdateException ex) when (IsDuplicateReservation(ex))
+            {
+                // Another concurrent consumer already reserved this order.
+                // Treat as idempotent success and avoid publishing failure.
+                return;
+            }
             catch (Exception ex)
             {
                 // Send Message Failure to Ecommerce in order to Rollback Order
                 await context.Publish(new InventoryReservationFailed(context.Message.OrderId, ex.Message));
             }
+        }
+
+        private static bool IsDuplicateReservation(DbUpdateException ex)
+        {
+            return ex.InnerException is SqlException sqlEx
+                && (sqlEx.Number == 2601 || sqlEx.Number == 2627);
         }
     }
 }

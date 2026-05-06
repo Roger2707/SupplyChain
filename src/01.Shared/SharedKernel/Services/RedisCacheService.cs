@@ -28,6 +28,15 @@ namespace SharedKernel.Services
             await _db.StringSetAsync(key, json, expiration);
         }
 
+        public async Task<bool> SetIfNotExistsAsync<T>(string key, T value, TimeSpan expiration = default)
+        {
+            if (expiration == default)
+                expiration = new TimeSpan(1, 0, 30);
+
+            var json = JsonSerializer.Serialize(value);
+            return await _db.StringSetAsync(key, json, expiration, when: When.NotExists);
+        }
+
         public async Task RemoveAsync(string key)
         {
             await _db.KeyDeleteAsync(key);

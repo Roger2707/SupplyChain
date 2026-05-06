@@ -126,7 +126,9 @@ builder.Services.AddMassTransit(x =>
     x.AddEntityFrameworkOutbox<InventoryDbContext>(o =>
     {
         o.UseSqlServer();
-        o.UseBusOutbox();
+        // Inventory module mainly publishes from consumers, so endpoint-level outbox
+        // is enough. Enabling BusOutbox for multiple DbContexts can cause
+        // IPublishEndpoint to bind to an unexpected outbox scope.
         o.DisableInboxCleanupService();
     });
 
@@ -218,9 +220,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy =>
     {
         policy
-        .AllowAnyOrigin()
+        .WithOrigins("http://localhost:5013", "https://localhost:5013")
         .AllowAnyMethod()
-        .AllowAnyHeader();
+        .AllowAnyHeader()
+        .AllowCredentials();
     });
 });
 

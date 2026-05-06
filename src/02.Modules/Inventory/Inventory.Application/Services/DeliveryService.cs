@@ -182,6 +182,9 @@ namespace Inventory.Application.Services
             if (exist == null)
                 return Result.Failure($"Delivery Id: {id} is not existed !");
 
+            if (exist.Status != DeliveryStatus.Draft)
+                return Result.Failure("Only Draft Delivery can be deleted.");
+
             exist.IsDeleted = true;
             await _unitOfWork.SaveChangesAsync();
             return Result.Success();
@@ -209,11 +212,11 @@ namespace Inventory.Application.Services
 
                     var delivery = await _unitOfWork.DeliveryRepository.GetWithLinesAsync(id, cancellationToken);
                     if (delivery == null || delivery.Status == DeliveryStatus.Cancelled || delivery.Status == DeliveryStatus.Posted)
-                        return Result.Failure("Delivery invalid status!");
+                        throw new Exception("Delivery invalid status!");
 
                     var salesOrder = await _unitOfWork.SalesOrderRepository.GetWithLinesAsync(delivery.SalesOrderId, cancellationToken);
                     if (salesOrder == null || salesOrder.Status == SalesOrderStatus.Completed || salesOrder.Status == SalesOrderStatus.Cancelled)
-                        return Result.Failure("Something went wrong with own SalesOrder!");
+                        throw new Exception("Something went wrong with own SalesOrder!");
 
                     var reservations = await _unitOfWork.InventoryReservationRepository
                         .GetReservationBySource(delivery.SalesOrderId, "SalesOrder", cancellationToken);
@@ -240,10 +243,10 @@ namespace Inventory.Application.Services
                         var key = (deliveryLine.ProductId, deliveryLine.RowNumber);
 
                         if (!salesOrderLinesDict.TryGetValue(key, out var salesOrderLine))
-                            return Result.Failure($"SalesOrderLine not found Product_{deliveryLine.ProductId} Row_{deliveryLine.RowNumber}");
+                            throw new Exception($"SalesOrderLine not found Product_{deliveryLine.ProductId} Row_{deliveryLine.RowNumber}");
 
                         if (deliveryLine.DeliveredQty > salesOrderLine.RemainingQty)
-                            return Result.Failure($"Delivery qty greater than SalesOrder remaining qty");
+                            throw new Exception($"Delivery qty greater than SalesOrder remaining qty");
 
                         // Update SO line
                         salesOrderLine.DeliveredQty += deliveryLine.DeliveredQty;
@@ -252,10 +255,10 @@ namespace Inventory.Application.Services
                             completedLines++;
 
                         if (!reservationDict.TryGetValue(key, out var reservation))
-                            return Result.Failure($"Reservation not found Product_{deliveryLine.ProductId} Row_{deliveryLine.RowNumber}");
+                            throw new Exception($"Reservation not found Product_{deliveryLine.ProductId} Row_{deliveryLine.RowNumber}");
 
                         if (reservation.ReservedQty < deliveryLine.DeliveredQty)
-                            return Result.Failure("Reservation not enough");
+                            throw new Exception("Reservation not enough");
 
                         reservation.ReservedQty -= deliveryLine.DeliveredQty;
 
@@ -266,7 +269,7 @@ namespace Inventory.Application.Services
                             throw new Exception($"Layer {reservation.LayerId} not found");
 
                         if (costLayer.RemainingQty < deliveryLine.DeliveredQty)
-                            return Result.Failure($"Layer {reservation.LayerId} not enough stock");
+                            throw new Exception($"Layer {reservation.LayerId} not enough stock");
 
                         // Reduce layer
                         costLayer.RemainingQty -= deliveryLine.DeliveredQty;
@@ -357,6 +360,9 @@ namespace Inventory.Application.Services
             var exist = await _unitOfWork.DeliveryRepository.GetByIdAsync(id, cancellationToken);
             if(exist == null)
                 return Result.Failure($"Delivery Id: {id} is not existed !");
+
+            if (exist.Status != DeliveryStatus.Draft)
+                return Result.Failure("Only Draft Delivery can be cancelled.");
 
             exist.Status = DeliveryStatus.Cancelled;
             await _unitOfWork.SaveChangesAsync (cancellationToken);
