@@ -1,15 +1,17 @@
-using Microsoft.EntityFrameworkCore;
 using Inventory.Domain.Entities;
-using Inventory.Domain.Entities.Products;
-using Inventory.Domain.Entities.Suppliers;
+using Inventory.Domain.Entities.Accounts;
+using Inventory.Domain.Entities.Delivery;
 using Inventory.Domain.Entities.GoodsReceipt;
 using Inventory.Domain.Entities.Inventory;
-using Inventory.Domain.Entities.PurchaseOrder;
-using Inventory.Domain.Entities.StockTransfer;
-using Inventory.Domain.Entities.SalesOrder;
-using Inventory.Domain.Entities.Delivery;
 using Inventory.Domain.Entities.Invoice;
-using Inventory.Domain.Entities.Accounts;
+using Inventory.Domain.Entities.Products;
+using Inventory.Domain.Entities.PurchaseOrder;
+using Inventory.Domain.Entities.SalesOrder;
+using Inventory.Domain.Entities.StockTransfer;
+using Inventory.Domain.Entities.Suppliers;
+using MassTransit;
+using MassTransit.EntityFrameworkCoreIntegration;
+using Microsoft.EntityFrameworkCore;
 using SharedKernel.Entities;
 
 namespace Inventory.Infrastructure.Data;
@@ -61,6 +63,11 @@ public class InventoryDbContext : DbContext
     public DbSet<Account> Accounts { get; set; }
     public DbSet<JournalEntry> JournalEntries { get; set; }
 
+    // OutBox Saga
+    public DbSet<OutboxMessage> OutboxMessages { get; set; }
+    public DbSet<OutboxState> OutboxStates { get; set; }
+    public DbSet<InboxState> InboxStates { get; set; }
+
     public InventoryDbContext(DbContextOptions<InventoryDbContext> options) : base(options)
     {
     }
@@ -111,6 +118,11 @@ public class InventoryDbContext : DbContext
                     .HasQueryFilter(GetSoftDeleteFilter(entityType.ClrType));
             }
         }
+
+        // Configurations for Outbox - MassTransit
+        modelBuilder.AddInboxStateEntity(e => e.ToTable("InboxState", "inventory"));
+        modelBuilder.AddOutboxMessageEntity(e => e.ToTable("OutboxMessage", "inventory"));
+        modelBuilder.AddOutboxStateEntity(e => e.ToTable("OutboxState", "inventory"));
     }
 
     private static System.Linq.Expressions.LambdaExpression GetSoftDeleteFilter(Type entityType)

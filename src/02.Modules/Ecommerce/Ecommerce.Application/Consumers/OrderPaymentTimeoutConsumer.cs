@@ -28,7 +28,7 @@ namespace ECommerce.Application.Consumers
                 order.OrderStatus = OrderStatus.Cancelled; // 2
 
                 // Cancel reserved stock in inventory (Release reserved stock back to available)
-                await _inventoryService.CancelReserveStockInLayers(context.Message.OrderId);
+                await _inventoryService.ReleaseReserveQtyInLayers(context.Message.OrderId);
 
                 await _unitOfWork.SaveChangesAsync();
             }

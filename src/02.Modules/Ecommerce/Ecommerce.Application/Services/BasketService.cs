@@ -110,12 +110,18 @@ namespace ECommerce.Application.Services
                         UnitPrice = sellingPriceInfo.SellingPrice,
                     };
                     basketDto.Items.Add(newItem);
+
+                    // Update TotalAmount
+                    basketDto.TotalAmount = basketDto.Items.Sum(i => i.LineTotal);
                 }
                 else
                 {
                     existedItem.Quantity += 1;
                     existedItem.UnitPrice = sellingPriceInfo.SellingPrice; // Update UnitPrice in case it was changed in Inventory
                     existedItem.LineTotal = existedItem.Quantity * existedItem.UnitPrice; // Update LineTotal
+
+                    // Update TotalAmount
+                    basketDto.TotalAmount = basketDto.Items.Sum(i => i.LineTotal);
                 }
 
                 string key = CF.GetCachedBasketKey(_currentUserService.UserId);

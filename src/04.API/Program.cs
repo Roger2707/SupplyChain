@@ -127,7 +127,6 @@ builder.Services.AddMassTransit(x =>
     {
         o.UseSqlServer();
         o.UseBusOutbox();
-
         o.DisableInboxCleanupService();
     });
 
@@ -144,7 +143,7 @@ builder.Services.AddMassTransit(x =>
             // Block Message (Idempotency) MessageId before going to Consumer
             e.UseEntityFrameworkOutbox<InventoryDbContext>(context);
 
-            e.UseMessageRetry(r => r.Incremental(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2)));
+            e.UseMessageRetry(r => r.Interval(5, TimeSpan.FromSeconds(5)));
             e.ConfigureConsumer<OrderCreatedConsumer>(context);
         });
 

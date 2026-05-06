@@ -26,8 +26,6 @@ namespace Inventory.Application.Consumers
             if (isExisted) return;
             try
             {
-                await _unitOfWork.BeginTransactionAsync();
-
                 var reservesDto = await _inventoryService.ReserveFIFOAsync(context.Message.Items.Select(i => new FIFOItemDto
                 {
                     ProductId = i.ProductId,
@@ -46,18 +44,14 @@ namespace Inventory.Application.Consumers
 
                 await context.Publish(new InventoryReserved(context.Message.OrderId, reservedDetails));
 
-                await _unitOfWork.CommitTransactionAsync();
+                await _unitOfWork.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                await _unitOfWork.RollbackTransactionAsync();
-                // THROW: In order to let MassTransit Retry (error temp)
                 throw;
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackTransactionAsync();
-
                 // Send Message Failure to Ecommerce in order to Rollback Order
                 await context.Publish(new InventoryReservationFailed(context.Message.OrderId, ex.Message));
             }

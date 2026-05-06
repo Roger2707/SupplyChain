@@ -15,7 +15,7 @@ namespace Inventory.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task CancelReserveStockInLayers(int orderId, CancellationToken cancellationToken = default)
+        public async Task ReleaseReserveQtyInLayers(int orderId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -30,7 +30,12 @@ namespace Inventory.Application.Services
                     var reserveQty = reservation.ReservedQty;
                     var layer = layersDic[layerId];
 
+                    // release reservedQty in Layer
                     layer.ReservedQty -= reserveQty;
+
+                    // release InventoryReservation (stock = 0 and finish it : isDelete = 1)
+                    reservation.ReservedQty -= reserveQty; // 0
+                    reservation.IsDeleted = true;
                 }
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
@@ -40,7 +45,7 @@ namespace Inventory.Application.Services
             }
         }
 
-        public async Task DecreaseStockInLayers(int orderId, CancellationToken cancellationToken = default)
+        public async Task ExportStockInLayers(int orderId, CancellationToken cancellationToken = default)
         {
             const int maxAttempts = 3;
             for (var attempt = 1; attempt <= maxAttempts; attempt++)

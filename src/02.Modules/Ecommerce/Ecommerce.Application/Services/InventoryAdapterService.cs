@@ -30,14 +30,14 @@ namespace ECommerce.Application.Services
             return await _inventoryService.ReserveFIFOAsync(items, cancellationToken);
         }
 
-        public async Task DecreaseStockInLayers(int orderId, CancellationToken cancellationToken = default)
+        public async Task ExportStockInLayers(int orderId, CancellationToken cancellationToken = default)
         {
-            await _inventoryService.DecreaseStockInLayers(orderId, cancellationToken);
+            await _inventoryService.ExportStockInLayers(orderId, cancellationToken);
         }
 
-        public async Task CancelReserveStockInLayers(int orderId, CancellationToken cancellationToken = default)
+        public async Task ReleaseReserveQtyInLayers(int orderId, CancellationToken cancellationToken = default)
         {
-            await _inventoryService.CancelReserveStockInLayers(orderId, cancellationToken);
+            await _inventoryService.ReleaseReserveQtyInLayers(orderId, cancellationToken);
         }
     }
 }

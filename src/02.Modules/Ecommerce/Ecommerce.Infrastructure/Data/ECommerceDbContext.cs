@@ -1,5 +1,7 @@
 using ECommerce.Domain.Entities.Baskets;
 using ECommerce.Domain.Entities.Orders;
+using MassTransit;
+using MassTransit.EntityFrameworkCoreIntegration;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Entities;
 
@@ -9,6 +11,9 @@ namespace ECommerce.Infrastructure.Data
     {
         public DbSet<Basket> Baskets { get; set; }
         public DbSet<Order> Orders { get; set; }
+        public DbSet<OutboxMessage> OutboxMessages { get; set; }
+        public DbSet<OutboxState> OutboxStates { get; set; }
+        public DbSet<InboxState> InboxStates { get; set; }
 
         public ECommerceDbContext(DbContextOptions<ECommerceDbContext> options) : base(options)
         {
@@ -27,6 +32,11 @@ namespace ECommerce.Infrastructure.Data
                         .HasQueryFilter(GetSoftDeleteFilter(entityType.ClrType));
                 }
             }
+
+            // Configurations for Outbox - MassTransit
+            modelBuilder.AddInboxStateEntity(e => e.ToTable("InboxState", "ecommerce"));
+            modelBuilder.AddOutboxMessageEntity(e => e.ToTable("OutboxMessage", "ecommerce"));
+            modelBuilder.AddOutboxStateEntity(e => e.ToTable("OutboxState", "ecommerce"));
         }
 
         private static System.Linq.Expressions.LambdaExpression GetSoftDeleteFilter(Type entityType)

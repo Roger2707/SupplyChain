@@ -1,11 +1,13 @@
 using ECommerce.Application.DTOs.Baskets;
 using ECommerce.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SupplyChain.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class BasketController : ControllerBase
     {
         private readonly IBasketService _basketService;

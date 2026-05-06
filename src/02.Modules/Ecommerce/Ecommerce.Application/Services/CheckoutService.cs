@@ -33,14 +33,13 @@ namespace ECommerce.Application.Services
             _publishEndpoint = publishEndpoint;
         }
 
+
         #region CheckOut Methods
 
         public async Task<Result<CheckoutResponseDto>> CheckoutAsync(OrderCreateDto dto, CancellationToken ct)
         {
             try
             {
-                await _unitOfWork.BeginTransactionAsync(ct);
-
                 // 1. Validate Basket - because Order need BasketId
                 var basket = await ValidateBasket(ct);
                 if (basket == null)
@@ -60,7 +59,6 @@ namespace ECommerce.Application.Services
 
                 // 4. SaveChanges and Commit
                 await _unitOfWork.SaveChangesAsync(ct);
-                await _unitOfWork.CommitTransactionAsync(ct);
 
                 // 5. Create PaymentIntent with Stripe
                 var intent = await _stripeService.CreatePaymentIntentAsync(
@@ -91,7 +89,6 @@ namespace ECommerce.Application.Services
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackTransactionAsync(ct);
                 return Result<CheckoutResponseDto>.Failure(ex.Message);
             }
         }
@@ -113,7 +110,7 @@ namespace ECommerce.Application.Services
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                     // Export Stock
-                    await _inventoryAdapterService.DecreaseStockInLayers(orderId, cancellationToken);
+                    await _inventoryAdapterService.ExportStockInLayers(orderId, cancellationToken);
 
                     scope.Complete();
                 }
