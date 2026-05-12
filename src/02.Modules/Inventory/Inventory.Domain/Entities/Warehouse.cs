@@ -15,8 +15,7 @@ public class Warehouse : BaseEntity
     public bool IsActive { get; set; } = true;
 
     public string? Description { get; set; }
-    public int? RegionId { get; set; }
-    public Region Region { get; set; }
+    public int ManagerId { get; set; }
 }
 
 

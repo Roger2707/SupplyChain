@@ -57,10 +57,8 @@ public class WarehouseConfiguration : BaseEntityConfiguration<Warehouse>
             .IsRequired()
             .HasDefaultValue(false);
 
-        builder.HasOne(w => w.Region)
-           .WithMany()                 
-           .HasForeignKey(w => w.RegionId)
-           .OnDelete(DeleteBehavior.Restrict);
+        builder.Property(w => w.ManagerId)
+            .IsRequired(true);
     }
 }
 

@@ -4,7 +4,6 @@ using Inventory.Application.Interfaces.Repositories;
 using Inventory.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel.Entities;
-using SharedKernel.Ultilities;
 
 namespace Inventory.Application.Services;
 
@@ -28,22 +27,6 @@ public class WarehouseService : IWarehouseService
 
         var warehouseDto = MapToDto(warehouse);
         return Result<WarehouseDto>.Success(warehouseDto);
-    }
-
-    public async Task<Result<int>> GetRegionIdByWarehouseIdAsync(int warehouseId, CancellationToken cancellationToken = default)
-    {
-        var warehouse = await _unitOfWork.WarehouseRepository.GetByIdAsync(warehouseId, cancellationToken);
-
-        if (warehouse == null)
-        {
-            return Result<int>.Failure($"Warehouse with ID {warehouseId} not found.");
-        }
-
-        int regionId = CF.GetInt(warehouse.RegionId);
-        if(regionId <= 0)
-            return Result<int>.Failure($"Region ID for Warehouse with ID {warehouseId} is invalid.");
-
-        return Result<int>.Success(regionId);
     }
 
     public async Task<Result<IEnumerable<WarehouseDto>>> GetAllAsync(CancellationToken cancellationToken = default)

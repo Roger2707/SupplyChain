@@ -59,9 +59,6 @@ namespace Inventory.Infrastructure.Seed
                 if (!await _context.Accounts.AnyAsync())
                     await SeedAccoutsAsync();
 
-                if (!await _context.Regions.AnyAsync())
-                    await SeedRegionAsync();
-
                 if (!await _context.Warehouses.AnyAsync())
                     await SeedWarehouseAsync();
 
@@ -145,22 +142,6 @@ namespace Inventory.Infrastructure.Seed
             await _context.SaveChangesAsync();
         }
 
-        private async Task SeedRegionAsync()
-        {
-            var regions = new List<Region>
-            {
-                new Region {RegionCode = "RE - 001", RegionName = "South"},
-                new Region {RegionCode = "RE - 002", RegionName = "North"},
-                new Region {RegionCode = "RE - 003", RegionName = "Central"},
-                new Region {RegionCode = "RE - 004", RegionName = "International"},
-            };
-
-            foreach (var region in regions)
-                _context.Regions.Add(region);
-
-            await _context.SaveChangesAsync();
-        }
-
         private async Task SeedWarehouseAsync()
         {
             var warehouses = new List<Warehouse>
@@ -172,7 +153,7 @@ namespace Inventory.Infrastructure.Seed
                     Address = "01 Le Duan, P.Ben Thanh, HCMC",
                     Description = "HCM Warehouse",
                     PhoneNumber = "1234567890",
-                    RegionId = 1,
+                    ManagerId = 2,
                 },
                 new Warehouse
                 {
@@ -181,7 +162,7 @@ namespace Inventory.Infrastructure.Seed
                     Address = "01 Ho Xuan Huong, HN",
                     Description = "HN Warehouse",
                     PhoneNumber = "1234567890",
-                    RegionId = 2,
+                    ManagerId = 3,
                 },
                 new Warehouse
                 {
@@ -190,7 +171,7 @@ namespace Inventory.Infrastructure.Seed
                     Address = "01 Hoang Hoa Tham, P.Vung Tau, HCMC",
                     Description = "VT Warehouse",
                     PhoneNumber = "1234567890",
-                    RegionId = 1,
+                    ManagerId = 4,
                 },
             };
 

@@ -19,6 +19,7 @@ using SharedKernel.Services;
 using StackExchange.Redis;
 using SupplyChain.WebApi.Middlewares;
 using SupplyChain.WebApi.Policies;
+using SupplyChain.WebApi.ResourceBases;
 using SupplyChain.WebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +28,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
+
+
+#region Configurations for Swagger with JWT Authentication
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -55,6 +59,8 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
+#endregion
 
 #region DbContext Configurations
 
@@ -192,27 +198,24 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("SuperAdminOnly", policy =>
         policy.RequireRole("Super_Admin"));
 
-    options.AddPolicy("RegionalOrAbove", policy =>
-    policy.RequireRole("Super_Admin", "Regional_Manager"));
-
     options.AddPolicy("ManagerOrAbove", policy =>
-        policy.RequireRole("Super_Admin", "Regional_Manager", "Warehouse_Manager"));
+        policy.RequireRole("Super_Admin", "Warehouse_Manager"));
 
-    // WAREHOUSE PERMISSION POLICIES
-    options.AddPolicy("CaUpdateWarehouse", policy =>
-        policy.Requirements.Add(new WarehousePermissionRequirement("Warehouse", "Update")));
+    options.AddPolicy("WAREHOUSE_VIEW", policy =>
+        policy.AddRequirements(new PermissionRequirement("WAREHOUSE_VIEW")));
 
-    options.AddPolicy("CanDeleteWarehouse", policy =>
-        policy.Requirements.Add(new WarehousePermissionRequirement("Warehouse", "Delete")));
-
-    options.AddPolicy("CanViewWarehouse", policy =>
-        policy.Requirements.Add(new WarehousePermissionRequirement("Warehouse", "View")));
+    options.AddPolicy("WAREHOUSE_EDIT", policy =>
+        policy.AddRequirements(new PermissionRequirement("WAREHOUSE_EDIT")));
 });
 
 #endregion
 
-// Register Permission Authorization Handler
-builder.Services.AddScoped<IAuthorizationHandler, WarehousePermissionHandler>();
+#region Register Custom Authorization Handlers
+
+builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, WarehouseScopeHandler>();
+
+#endregion
 
 // CORS
 builder.Services.AddCors(options =>
@@ -229,9 +232,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Custom Middlewares
+#region Global Middlewares
+
+app.UseMiddleware<PermissionMiddleWare>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestResponseLoggingMiddleware>();
+
+#endregion
 
 // Configure the HTTP request pipeline
 app.UseSwagger();

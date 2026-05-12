@@ -4,6 +4,5 @@
     {
         public int UserId { get; set; }
         public int WarehouseId { get; set; }
-        public bool IsWarehouseManager { get; set; } = false;
     }
 }

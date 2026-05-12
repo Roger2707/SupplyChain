@@ -19,7 +19,6 @@ namespace Inventory.Infrastructure.Data;
 public class InventoryDbContext : DbContext
 {
     public DbSet<Warehouse> Warehouses { get; set; }
-    public DbSet<Region> Regions { get; set; }
 
     // Customer / Supplier entities would go here
     public DbSet<Customer> Customers { get; set; }

@@ -11,7 +11,6 @@ public interface IWarehouseService
     Task<Result<WarehouseDto>> UpdateAsync(int id, UpdateWarehouseDto updateDto, CancellationToken cancellationToken = default);
     Task<Result> DeleteAsync(int id, CancellationToken cancellationToken = default);
     Task<Result<bool>> ExistsAsync(int id, CancellationToken cancellationToken = default);
-    Task<Result<int>> GetRegionIdByWarehouseIdAsync(int warehouseId, CancellationToken cancellationToken = default);
 }
 
 

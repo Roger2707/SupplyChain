@@ -57,7 +57,6 @@ namespace Identity.Application.Services
                 Module = module,
                 Action = action,
                 Description = createDto.Description,
-                PermissionScope = PermissionScope.Warehouse
             };
 
             await _unitOfWork.PermissionRepository.AddAsync(permission, cancellationToken);
