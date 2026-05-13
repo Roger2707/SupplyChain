@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Identity.Infrastructure.Migrations
 {
     [DbContext(typeof(IdentityDbContext))]
-    [Migration("20260506064422_createIdentityDb")]
+    [Migration("20260513030119_createIdentityDb")]
     partial class createIdentityDb
     {
         /// <inheritdoc />
@@ -57,9 +57,6 @@ namespace Identity.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("PermissionScope")
-                        .HasColumnType("int");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -244,9 +241,6 @@ namespace Identity.Infrastructure.Migrations
 
                     b.Property<int>("WarehouseId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("IsWarehouseManager")
-                        .HasColumnType("bit");
 
                     b.HasKey("UserId", "WarehouseId");
 

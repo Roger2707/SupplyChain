@@ -18,8 +18,9 @@ namespace SupplyChain.WebApi.Middlewares
                 var roles = context.User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
 
                 var permissionNames = await db.RolePermissions
-                                    .Where(rp => roles.Contains(rp.RoleId.ToString()))
                                     .Include(rp => rp.Permission)
+                                    .Include(rp => rp.Role)
+                                    .Where(rp => roles.Contains(rp.Role.RoleName.ToString()))
                                     .Select(rp => rp.Permission.PermissionName)
                                     .ToListAsync();
 

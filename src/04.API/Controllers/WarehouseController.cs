@@ -2,6 +2,7 @@ using Inventory.Application.DTOs.Warehouses;
 using Inventory.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SupplyChain.WebApi.ResourceBases;
 
 namespace SupplyChain.WebApi.Controllers;
 
@@ -10,14 +11,16 @@ namespace SupplyChain.WebApi.Controllers;
 public class WarehouseController : ControllerBase
 {
     private readonly IWarehouseService _warehouseService;
+    private readonly IAuthorizationService _authorizationService;
 
-    public WarehouseController(IWarehouseService warehouseService)
+    public WarehouseController(IWarehouseService warehouseService, IAuthorizationService authorizationService)
     {
         _warehouseService = warehouseService;
+        _authorizationService = authorizationService;
     }
 
     [HttpGet]
-    [Authorize(Policy = "SuperAdminOnly")]
+    [Authorize(Roles = "Super_Admin")]
     public async Task<ActionResult<IEnumerable<WarehouseDto>>> GetAll(CancellationToken cancellationToken = default)
     {
         var result = await _warehouseService.GetAllAsync(cancellationToken);
@@ -31,21 +34,24 @@ public class WarehouseController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Policy = "CanViewWarehouse")]
+    [Authorize(Policy = "WAREHOUSE_VIEW")]
     public async Task<ActionResult<WarehouseDto>> GetById(int id, CancellationToken cancellationToken = default)
     {
-        var result = await _warehouseService.GetByIdAsync(id, cancellationToken);
-        
+        var result = await _warehouseService.GetByIdAsync(id, cancellationToken); 
         if (!result.IsSuccess)
-        {
             return NotFound(result.ErrorMessage);
-        }
 
-        return Ok(result.Data);
+        var warehouse = result.Data;
+        // Resource-based
+        var isAuthorized = await _authorizationService
+            .AuthorizeAsync(User, warehouse, new WarehouseScopeRequirement());
+        if (!isAuthorized.Succeeded) return Forbid();
+
+        return Ok(warehouse);
     }
 
     [HttpPost]
-    [Authorize(Policy = "SuperAdminOnly")]
+    [Authorize(Roles = "Super_Admin")]
     public async Task<ActionResult<WarehouseDto>> Create([FromBody] CreateWarehouseDto createDto, CancellationToken cancellationToken = default)
     {
         if (!ModelState.IsValid)
@@ -64,14 +70,13 @@ public class WarehouseController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Policy = "CanUpdateWarehouse")]
+    [Authorize(Policy = "WAREHOUSE_EDIT")]
     public async Task<ActionResult<WarehouseDto>> Update(int id, [FromBody] UpdateWarehouseDto updateDto, CancellationToken cancellationToken = default)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
-
         var result = await _warehouseService.UpdateAsync(id, updateDto, cancellationToken);
         
         if (!result.IsSuccess)
@@ -83,11 +88,17 @@ public class WarehouseController : ControllerBase
             return BadRequest(result.ErrorMessage);
         }
 
+        var warehouse = result.Data;
+        // Resource-based
+        var isAuthorized = await _authorizationService
+            .AuthorizeAsync(User, warehouse, new WarehouseScopeRequirement());
+        if (!isAuthorized.Succeeded) return Forbid();
+
         return Ok(result.Data);
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Policy = "CanDeleteWarehouse")]
+    [Authorize(Roles = "Super_Admin")]
     public async Task<ActionResult> Delete(int id, CancellationToken cancellationToken = default)
     {
         var result = await _warehouseService.DeleteAsync(id, cancellationToken);
@@ -100,7 +111,7 @@ public class WarehouseController : ControllerBase
     }
 
     [HttpGet("{id}/exists")]
-    [Authorize]
+    [Authorize(Policy = "WAREHOUSE_EDIT")]
     public async Task<ActionResult<bool>> Exists(int id, CancellationToken cancellationToken = default)
     {
         var result = await _warehouseService.ExistsAsync(id, cancellationToken);

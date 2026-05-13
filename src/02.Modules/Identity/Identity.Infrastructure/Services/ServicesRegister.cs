@@ -22,6 +22,7 @@ namespace Identity.Infrastructure.Services
             services.AddScoped<IUserQueries, UserQueries>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<IJwtService, JwtService>();
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
 
             // Register Dapper query services (read-model)
             services.AddScoped<IDapperExecutor, DapperExecutor>();

@@ -55,9 +55,6 @@ namespace Identity.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("PermissionScope")
-                        .HasColumnType("int");
-
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -241,9 +238,6 @@ namespace Identity.Infrastructure.Migrations
 
                     b.Property<int>("WarehouseId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("IsWarehouseManager")
-                        .HasColumnType("bit");
 
                     b.HasKey("UserId", "WarehouseId");
 

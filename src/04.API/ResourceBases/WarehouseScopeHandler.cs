@@ -1,4 +1,4 @@
-﻿using Inventory.Domain.Entities;
+﻿using Inventory.Application.DTOs.Warehouses;
 using Microsoft.AspNetCore.Authorization;
 using SharedKernel.Ultilities;
 using System.Security.Claims;
@@ -10,12 +10,12 @@ namespace SupplyChain.WebApi.ResourceBases
 
     // Handler
     public class WarehouseScopeHandler
-        : AuthorizationHandler<WarehouseScopeRequirement, Warehouse>
+        : AuthorizationHandler<WarehouseScopeRequirement, WarehouseDto>
     {
         protected override Task HandleRequirementAsync(
             AuthorizationHandlerContext context,
             WarehouseScopeRequirement requirement,
-            Warehouse warehouse)
+            WarehouseDto warehouse)
         {
             var userId = CF.GetInt(context.User.FindFirstValue(ClaimTypes.NameIdentifier));
 

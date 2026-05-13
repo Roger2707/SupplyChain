@@ -161,17 +161,15 @@ builder.Services.AddMassTransit(x =>
 
 #endregion
 
-#region Services
+#region Services Registeration
 
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-builder.Services.AddInventoryServices();
 builder.Services.AddIdentityServices();
+builder.Services.AddInventoryServices();
 builder.Services.AddEcommerceServices();
 
 builder.Services.AddScoped<SeedIdentityService>();
 builder.Services.AddScoped<SeederService>();
-
-builder.Services.AddScoped<Identity.Application.Interfaces.IAuthenticationService, Identity.Application.Services.AuthenticationService>();
 
 #endregion
 
@@ -206,6 +204,9 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy("WAREHOUSE_EDIT", policy =>
         policy.AddRequirements(new PermissionRequirement("WAREHOUSE_EDIT")));
+
+    options.AddPolicy("WAREHOUSE_DELETE", policy =>
+        policy.AddRequirements(new PermissionRequirement("WAREHOUSE_DELETE")));
 });
 
 #endregion
@@ -234,7 +235,6 @@ var app = builder.Build();
 
 #region Global Middlewares
 
-app.UseMiddleware<PermissionMiddleWare>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
@@ -250,8 +250,8 @@ app.UseSwaggerUI(c =>
 
 app.UseCors("AllowAll");
 
-// Authentication must come before Authorization
 app.UseAuthentication();
+app.UseMiddleware<PermissionMiddleWare>();
 app.UseAuthorization();
 
 app.MapControllers();

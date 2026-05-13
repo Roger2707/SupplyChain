@@ -45,10 +45,10 @@ namespace Identity.Infrastructure.Seed
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitTransactionAsync();
             }
-            catch
+            catch(Exception ex)
             {
                 await _unitOfWork?.RollbackTransactionAsync();
-                return;
+                throw new Exception(ex.Message);
             }
         }
 
@@ -594,7 +594,7 @@ namespace Identity.Infrastructure.Seed
             var rolePermissions = new List<RolePermission>
             {
                 // Warehouse_Magager 's Permissions
-                new RolePermission { RoleId = roles["Warehouse_Manager"], PermissionId = permissions["WAREHOUSE_UPDATE"]},
+                new RolePermission { RoleId = roles["Warehouse_Manager"], PermissionId = permissions["WAREHOUSE_EDIT"]},
                 new RolePermission { RoleId = roles["Warehouse_Manager"], PermissionId = permissions["WAREHOUSE_DELETE"]},
                 new RolePermission { RoleId = roles["Warehouse_Manager"], PermissionId = permissions["WAREHOUSE_VIEW"]},
 
@@ -637,8 +637,6 @@ namespace Identity.Infrastructure.Seed
                 new RolePermission { RoleId = roles["Warehouse_Manager"], PermissionId = permissions["PRODUCT_DELETE"]},
                 new RolePermission { RoleId = roles["Warehouse_Manager"], PermissionId = permissions["PRODUCT_EDIT"]},
                 new RolePermission { RoleId = roles["Warehouse_Manager"], PermissionId = permissions["PRODUCT_VIEW"]},
-                new RolePermission { RoleId = roles["Warehouse_Manager"], PermissionId = permissions["PRODUCT_POST"]},
-                new RolePermission { RoleId = roles["Warehouse_Manager"], PermissionId = permissions["PRODUCT_CANCEL"]},
 
 
                  // Staff 's Permissions

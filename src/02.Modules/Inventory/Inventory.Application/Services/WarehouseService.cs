@@ -131,6 +131,7 @@ public class WarehouseService : IWarehouseService
             PhoneNumber = warehouse.PhoneNumber,
             IsActive = warehouse.IsActive,
             Description = warehouse.Description,
+            ManagerId = warehouse.ManagerId,
             CreatedAt = warehouse.CreatedAt,
             UpdatedAt = warehouse.UpdatedAt,
             RowVersion = warehouse.RowVersion
