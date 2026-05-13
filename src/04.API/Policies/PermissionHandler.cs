@@ -15,7 +15,7 @@ namespace SupplyChain.WebApi.Policies
         {
             var permissions = _httpContextAccessor.HttpContext?.Items["permissions"] as List<string>;
 
-            if (permissions?.Contains(requirement.Permission) == true)
+            if (permissions?.Contains("*") == true || permissions?.Contains(requirement.Permission) == true)
             {
                 context.Succeed(requirement);
                 return;

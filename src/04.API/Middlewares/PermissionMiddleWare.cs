@@ -14,17 +14,24 @@ namespace SupplyChain.WebApi.Middlewares
         {
             if (context.User.Identity?.IsAuthenticated == true)
             {
-                var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var roles = context.User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
+                if(context.User.IsInRole("Super_Admin"))
+                {
+                    context.Items["permissions"] = new List<string> { "*" };
+                }
+                else
+                {
+                    var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    var roles = context.User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
 
-                var permissionNames = await db.RolePermissions
-                                    .Include(rp => rp.Permission)
-                                    .Include(rp => rp.Role)
-                                    .Where(rp => roles.Contains(rp.Role.RoleName.ToString()))
-                                    .Select(rp => rp.Permission.PermissionName)
-                                    .ToListAsync();
+                    var permissionNames = await db.RolePermissions
+                                        .Include(rp => rp.Permission)
+                                        .Include(rp => rp.Role)
+                                        .Where(rp => roles.Contains(rp.Role.RoleName.ToString()))
+                                        .Select(rp => rp.Permission.PermissionName)
+                                        .ToListAsync();
 
-                context.Items["permissions"] = permissionNames;
+                    context.Items["permissions"] = permissionNames;
+                }
             }
 
             await _next(context);
